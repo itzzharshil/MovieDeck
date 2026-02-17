@@ -192,7 +192,7 @@ async function setupHeroSlideshow(endpoint) {
                     `url(${BACK}${m.backdrop_path})`;
                 
                 if (m.logo_path) {
-                    heroTitle.innerHTML = `<img src="${IMG}${m.logo_path}" class="hero-logo" alt="${m.title || m.name}">`;
+                    heroTitle.innerHTML = `<img src="${IMG}${m.logo_path}" class="hero-logo" loading="lazy" alt="${m.title || m.name}">`;
                 } else {
                     heroTitle.innerText = m.title || m.name;
                 }
@@ -613,7 +613,7 @@ async function changeSeason(num) {
             div.innerHTML = `
                 <div class="ep-index">${ep.episode_number}</div>
                 <div class="ep-thumb-container">
-                    <img src="${ep.still_path ? IMG + ep.still_path : ""}" class="ep-thumb" onerror="this.style.backgroundColor='#333'">
+                    <img src="${ep.still_path ? IMG + ep.still_path : ""}" class="ep-thumb" loading="lazy" onerror="this.style.backgroundColor='#333'">
                     <div style="position:absolute; inset:0; display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.3);">
                         <i class="fas fa-play" style="color:white; opacity:0.8;"></i>
                     </div>
