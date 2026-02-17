@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieDeck - Premium Streaming Experience</title>
+    <meta name="description" content="MovieDeck is a premium, glassmorphism-styled movie and TV show explorer. Discover trending content, watch trailers, and track your favorites." />
+    <meta name="keywords" content="movies, tv shows, streaming, glassmorphism, entertainment, film, series, tmdb" />
+    <meta name="author" content="MovieDeck" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MovieDeck - Premium Streaming Experience" />
+    <meta property="og:description" content="Discover trending content, watch trailers, and track your favorites on MovieDeck." />
+    <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/2503/2503508.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="MovieDeck - Premium Streaming Experience" />
+    <meta property="twitter:description" content="Discover trending content, watch trailers, and track your favorites on MovieDeck." />
+    <meta property="twitter:image" content="https://cdn-icons-png.flaticon.com/512/2503/2503508.png" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/2503/2503508.png">
+  </head>
+  <body>
+    <!-- ADBLOCK MESSAGE -->
+    <!-- ADBLOCK MODAL -->
+    <div id="adblock-msg" class="adblock-overlay">
+        <div class="adblock-card">
+            <div class="adblock-icon-large">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="adblock-text">
+                <h3>AdBlock Recommended</h3>
+                <p>For the best cinematic experience, we highly recommend enabling an <b>AdBlocker</b>.</p>
+            </div>
+            <button class="btn-adblock-close" onclick="closeAdblockMsg()">Got it</button>
+        </div>
+    </div>
+
+    <nav class="navbar" id="navbar">
+      <div class="nav-left">
+        <div class="logo" onclick="loadContent('home')">MovieDeck</div>
+        <ul class="nav-links">
+          <li
+            class="nav-link active"
+            onclick="loadContent('home')"
+            id="nav-home"
+          >
+            Home
+          </li>
+          <li class="nav-link" onclick="loadContent('tv')" id="nav-tv">
+            TV Series
+          </li>
+          <li class="nav-link" onclick="loadContent('movie')" id="nav-movie">
+            Movies
+          </li>
+          <li class="nav-link" onclick="loadExplore()" id="nav-explore">
+            Explore
+          </li>
+          <li class="nav-link" onclick="loadWishlist()" id="nav-list">
+            My List
+          </li>
+        </ul>
+      </div>
+      <div class="nav-right">
+        <div class="search-container">
+          <i class="fas fa-search nav-icon" onclick="toggleSearch()"></i>
+          <input
+            type="text"
+            id="search-input"
+            class="search-input"
+            placeholder="Titles, people, genres..."
+          />
+        </div>
+        <div class="notify-box">
+          <i class="fas fa-bell nav-icon"></i><span class="badge">3</span>
+        </div>
+
+        <div class="profile-container">
+          <div class="profile-icon">
+            <i class="fas fa-smile" style="color: white; font-size: 18px"></i>
+          </div>
+          <div class="profile-dropdown">
+            <a href="#" onclick="clearHistory()"><i class="fas fa-history" style="margin-right: 10px; width: 20px; text-align: center;"></i> Clear History</a>
+            <a href="#" onclick="clearWishlist()"><i class="fas fa-trash" style="margin-right: 10px; width: 20px; text-align: center;"></i> Clear My List</a>
+            <div class="dropdown-divider"></div>
+            <a href="#" onclick="resetApp()" style="color: #ff4757;"><i class="fas fa-sign-out-alt" style="margin-right: 10px; width: 20px; text-align: center;"></i> Sign Out</a>
+          </div>
+        </div>
+        <div class="menu-toggle" onclick="toggleMobileMenu()">
+          <i class="fas fa-bars"></i>
+        </div>
+      </div>
+    </nav>
+
+    <div class="mobile-menu" id="mobile-menu">
+        <div class="mobile-menu-header">
+            <div class="logo">MovieDeck</div>
+            <i class="fas fa-times" onclick="toggleMobileMenu()" style="font-size: 1.5rem; cursor: pointer;"></i>
+        </div>
+        <ul class="mobile-nav-links">
+            <li onclick="loadContent('home'); toggleMobileMenu()">Home</li>
+            <li onclick="loadContent('tv'); toggleMobileMenu()">TV Series</li>
+            <li onclick="loadContent('movie'); toggleMobileMenu()">Movies</li>
+            <li onclick="loadExplore(); toggleMobileMenu()">Explore</li>
+            <li onclick="loadWishlist(); toggleMobileMenu()">My List</li>
+        </ul>
+    </div>
+
+    <header class="hero" id="hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-content" id="hero-content-box">
+        <h1 class="hero-title" id="hero-title">Loading...</h1>
+        <p class="hero-desc" id="hero-desc"></p>
+        <div id="hero-buttons" style="display: none">
+          <button
+            class="btn btn-white"
+            onclick="playMedia(window.currentHeroItem)"
+          >
+            <i class="fas fa-play"></i> Play
+          </button>
+          <button class="btn btn-grey" onclick="playTrailer(window.currentHeroItem)">
+            <i class="fas fa-film"></i> Trailer
+          </button>
+          <button class="btn btn-grey" onclick="addToWishlistHero()">
+            <i class="fas fa-plus"></i> My List
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div
+      id="main-content"
+      style="
+        margin-top: -100px;
+        position: relative;
+        z-index: 20;
+        min-height: 500px;
+      "
+    ></div>
+
+    <div class="modal-overlay" id="modal" onclick="closeModal(event)">
+      <div class="modal-card">
+        <button class="modal-close" onclick="closeModal(event)">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="modal-hero" id="m-bg">
+          <div class="modal-gradient"></div>
+          <div class="modal-content-layer">
+            <h1 class="modal-title" id="m-title">Title</h1>
+            <div class="modal-buttons">
+              <button class="btn btn-white" onclick="playMedia(currentModalItem)">
+                <i class="fas fa-play"></i> Play
+              </button>
+              <button class="btn btn-grey" onclick="playTrailer(currentModalItem)">
+                <i class="fas fa-film"></i> Trailer
+              </button>
+              <button class="btn btn-grey btn-icon-only" onclick="addToWishlistModal()">
+                <i class="fas fa-plus"></i>
+              </button>
+              <button class="btn btn-grey" onclick="showCast(currentModalItem)">
+                <i class="fas fa-users"></i> Cast
+              </button>
+              <button class="btn btn-grey btn-icon-only" onclick="shareContent()">
+                <i class="fas fa-share-alt"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div style="padding: 30px 50px;">
+          <div>
+            <div class="meta-line">
+              <span style="color: #46d369" id="m-match">98% Match</span>
+              <span id="m-date">2023</span>
+              <span class="badge-imdb" id="m-imdb">IMDb 8.5</span>
+              <span id="m-genres" style="color: #bbb; margin-left: 15px;">Loading...</span>
+            </div>
+            <p
+              id="m-desc"
+              style="
+                line-height: 1.6;
+                margin-bottom: 30px;
+                color: #ddd;
+                font-size: 1.1rem;
+              "
+            ></p>
+          </div>
+        </div>
+        
+        <div class="modal-tabs">
+            <div class="modal-tab active" onclick="switchModalTab('more-like-this')">More Like This</div>
+            <div class="modal-tab" onclick="switchModalTab('reviews')">Reviews</div>
+        </div>
+
+        <div id="reviews-section" style="padding: 0 50px 30px 50px; display: none;">
+            <div id="reviews-list"></div>
+        </div>
+
+        <div id="tv-section" style="display: none">
+          <div class="season-header">
+            <h3>Episodes</h3>
+            <select
+              id="season-select"
+              class="season-selector"
+              onchange="changeSeason(this.value)"
+            ></select>
+          </div>
+          <div id="episode-list"></div>
+        </div>
+        <div class="more-like-this-container" id="rec-section">
+          <div class="recommendation-grid" id="rec-grid"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <div id="video-overlay" class="video-overlay" onclick="closeVideo()">
+      <div class="video-close-btn" onclick="closeVideo()">
+        <i class="fas fa-times"></i>
+      </div>
+      <div class="video-container" onclick="event.stopPropagation()">
+        
+        <iframe id="video-frame" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+        
+        <!-- Episode Nav -->
+        <div class="episode-nav" id="episode-nav" style="display: none; justify-content: center; padding: 15px;">
+            <button onclick="prevEpisode()" id="btn-prev-ep" class="btn btn-grey" style="padding: 5px 15px; font-size: 0.9rem;">
+                <i class="fas fa-chevron-left"></i> Prev
+            </button>
+            <span id="current-ep-info" style="margin: 0 20px; color: white; font-weight: bold;">S1 E1</span>
+            <button onclick="nextEpisode()" id="btn-next-ep" class="btn btn-grey" style="padding: 5px 15px; font-size: 0.9rem;">
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="trailer-overlay" class="video-overlay" onclick="closeTrailer()">
+      <div class="video-container" onclick="event.stopPropagation()">
+        <button class="video-back-btn" onclick="closeTrailer()">
+            <i class="fas fa-arrow-left"></i> Back
+        </button>
+        <iframe id="trailer-frame" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+      </div>
+    </div>
+
+    <!-- PERSON MODAL -->
+    <div class="modal-overlay" id="person-modal" onclick="closePersonModal(event)">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closePersonModal(event)">
+                <i class="fas fa-times"></i>
+            </button>
+            <button class="modal-back" id="p-back-btn" onclick="goBackToMovie()" style="display:none;">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="person-content" style="padding: 40px;">
+                <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                    <div id="p-img-container" style="flex: 0 0 300px;">
+                        <img id="p-img" src="" style="width: 100%; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
+                    </div>
+                    <div style="flex: 1; min-width: 300px;">
+                        <h2 id="p-name" style="font-size: 2.5rem; margin-bottom: 20px;">Name</h2>
+                        <p id="p-bio" style="color: #ccc; line-height: 1.6; margin-bottom: 30px; max-height: 200px; overflow-y: auto;">Bio...</p>
+                        <div class="meta-line" id="p-meta">
+                            <span id="p-birth" style="color: #aaa;">Born: -</span>
+                            <span id="p-place" style="color: #aaa;">Place: -</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 30px;" id="p-known-for-container">
+                     <h3 id="p-known-for">Known For</h3>
+                     <div class="recommendation-grid" id="p-credits-grid" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API MODAL -->
+    <!-- Profile Management Modal Removed -->
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="logo">MovieDeck</div>
+                <p>Experience Cinema. A premium, glassmorphism-inspired streaming interface designed for the modern web.</p>
+                <div class="footer-socials">
+                    <a href="https://github.com/itzzharshil" target="_blank" class="social-icon"><i class="fab fa-github"></i></a>
+                    <a href="https://twitter.com" target="_blank" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    <a href="https://instagram.com" target="_blank" class="social-icon"><i class="fab fa-instagram"></i></a>
+                    <a href="https://linkedin.com" target="_blank" class="social-icon"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h4>Navigation</h4>
+                    <a href="#" onclick="loadContent('home'); return false;">Home</a>
+                    <a href="#" onclick="loadContent('tv'); return false;">TV Series</a>
+                    <a href="#" onclick="loadContent('movie'); return false;">Movies</a>
+                    <a href="#" onclick="loadExplore(); return false;">Explore</a>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <a href="#" onclick="showTextModal('privacy'); return false;">Privacy Policy</a>
+                    <a href="#" onclick="showTextModal('terms'); return false;">Terms of Service</a>
+                    <a href="#" onclick="showTextModal('cookie'); return false;">Cookie Policy</a>
+                    <a href="#" onclick="showTextModal('dmca'); return false;">DMCA</a>
+                </div>
+                <div class="footer-column">
+                    <h4>Account</h4>
+                    <a href="#" onclick="loadWishlist(); return false;">My List</a>
+                    <a href="#" onclick="showTextModal('profile-stub'); return false;">Profile</a>
+                    <a href="#" onclick="showTextModal('settings-stub'); return false;">Settings</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 MovieDeck. All rights reserved.</p>
+            <p class="attribution">Powered by <a href="https://www.themoviedb.org/" target="_blank">TMDB</a></p>
+        </div>
+    </footer>
+
+    <!-- GENERIC TEXT MODAL -->
+    <div id="text-modal" class="modal-overlay" onclick="closeTextModal(event)">
+        <div class="modal-card text-modal-card">
+            <div class="modal-header">
+                <h2 id="tm-title">Title</h2>
+                <div class="modal-close-btn" onclick="closeTextModal(event)">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="modal-body" id="tm-body">
+                <!-- Content injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
