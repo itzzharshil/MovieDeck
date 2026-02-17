@@ -65,24 +65,20 @@
       <div class="nav-left">
         <div class="logo" onclick="loadContent('home')">MovieDeck</div>
         <ul class="nav-links">
-          <li
-            class="nav-link active"
-            onclick="loadContent('home')"
-            id="nav-home"
-          >
-            Home
+          <li class="nav-item"></li>
+            <a href="#home" class="nav-link active" id="nav-home" onclick="loadContent('home'); return false;">Home</a>
           </li>
-          <li class="nav-link" onclick="loadContent('tv')" id="nav-tv">
-            TV Series
+          <li class="nav-item">
+            <a href="#tv" class="nav-link" id="nav-tv" onclick="loadContent('tv'); return false;">TV Series</a>
           </li>
-          <li class="nav-link" onclick="loadContent('movie')" id="nav-movie">
-            Movies
+          <li class="nav-item">
+            <a href="#movie" class="nav-link" id="nav-movie" onclick="loadContent('movie'); return false;">Movies</a>
           </li>
-          <li class="nav-link" onclick="loadExplore()" id="nav-explore">
-            Explore
+          <li class="nav-item">
+            <a href="#explore" class="nav-link" id="nav-explore" onclick="loadExplore(); return false;">Explore</a>
           </li>
-          <li class="nav-link" onclick="loadWishlist()" id="nav-list">
-            My List
+          <li class="nav-item">
+            <a href="#list" class="nav-link" id="nav-list" onclick="loadWishlist(); return false;">My List</a>
           </li>
         </ul>
       </div>
@@ -123,18 +119,18 @@
             <i class="fas fa-times" onclick="toggleMobileMenu()" style="font-size: 1.5rem; cursor: pointer;"></i>
         </div>
         <ul class="mobile-nav-links">
-            <li onclick="loadContent('home'); toggleMobileMenu()">Home</li>
-            <li onclick="loadContent('tv'); toggleMobileMenu()">TV Series</li>
-            <li onclick="loadContent('movie'); toggleMobileMenu()">Movies</li>
-            <li onclick="loadExplore(); toggleMobileMenu()">Explore</li>
-            <li onclick="loadWishlist(); toggleMobileMenu()">My List</li>
+            <li><a href="#home" onclick="loadContent('home'); toggleMobileMenu();">Home</a></li>
+            <li><a href="#tv" onclick="loadContent('tv'); toggleMobileMenu();">TV Series</a></li>
+            <li><a href="#movie" onclick="loadContent('movie'); toggleMobileMenu();">Movies</a></li>
+            <li><a href="#explore" onclick="loadExplore(); toggleMobileMenu();">Explore</a></li>
+            <li><a href="#list" onclick="loadWishlist(); toggleMobileMenu();">My List</a></li>
         </ul>
     </div>
 
     <header class="hero" id="hero">
       <div class="hero-overlay"></div>
       <div class="hero-content" id="hero-content-box">
-        <h1 class="hero-title" id="hero-title">Loading...</h1>
+        <h1 class="hero-title" id="hero-title">MovieDeck</h1>
         <p class="hero-desc" id="hero-desc"></p>
         <div id="hero-buttons" style="display: none">
           <button

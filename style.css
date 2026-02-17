@@ -91,12 +91,18 @@ body {
   list-style: none;
   align-items: center;
 }
+.nav-item {
+    list-style: none;
+}
+
 .nav-link {
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 0.95rem;
-  transition: all 0.3s;
+  color: var(--text-secondary); /* Applied to the <a> tag now */
   font-weight: 500;
+  cursor: pointer;
+  transition: color 0.3s;
+  font-size: 0.95rem;
+  text-decoration: none; /* Remove underline for <a> */
+  display: block; /* Ensure hit area */
   padding: 8px 10px;
   border-radius: 20px;
 }
