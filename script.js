@@ -228,6 +228,8 @@ function createPosterElement(m, type, className = "poster-card") {
     img.className = className;
     img.alt = m.title || m.name || "Movie Poster";
     img.loading = "lazy";
+    img.width = 200; // Hint for browser
+    img.height = 300; // Hint for browser
     
     img.onclick = () => {
         if (type === 'person') openPerson(m.id);
