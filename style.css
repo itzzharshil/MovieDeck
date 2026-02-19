@@ -388,12 +388,12 @@ body {
 
 @media (max-width: 768px) {
     #main-content {
-        margin-top: 0; /* No overlap on mobile */
+        margin-top: 40px; /* ADDED SPACE: Prevent overlap with tall hero content */
     }
     .hero {
         min-height: auto; /* Let content dictate height on mobile */
         height: auto;
-        padding-bottom: 40px;
+        padding-bottom: 100px; /* INCREASED PADDING: Ensure buttons clear the fold */
         display: block; /* Stack content normally */
     }
     .hero-content {
