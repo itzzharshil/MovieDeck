@@ -1,63 +1,57 @@
-# 🎬 MovieDeck
+# MovieDeck 🎬
 
-![MovieDeck Banner](assets/images/hero-image.png)
+![MovieDeck Preview](assets/images/banner.png)
 
-> **Experience Cinema.** A premium, glassmorphism-inspired streaming interface designed for the modern web.
+A personal project where I experimented with glassmorphism UI design. I wanted to build a movie streaming interface that rivals the big players like Netflix, Prime Video, and Apple TV—but feels even smoother.
 
-[![Live Demo](https://img.shields.io/badge/Demo-Launch_App-E50914?style=for-the-badge&logo=google-chrome&logoColor=white)](https://itzzharshil.github.io/MovieDeck/)
-[![License](https://img.shields.io/badge/License-MIT-333333?style=for-the-badge)](LICENSE)
-
----
-
-## 🍿 About The Project
-
-**MovieDeck** isn't just another movie list. It's an exploration of **User Interface Design**, pushing the boundaries of what's possible with standard web technologies. 
-
-I built this to create a streaming experience that feels **alive**. No clunky menus, no jarring loads—just smooth, translucent layers and neon accents that put the content front and center.
-
-### ✨ What Makes It Special?
-
-*   **Glassmorphism UI**: The interface floats on a blurred, translucent layer, giving it a depth and premium feel rarely seen in web apps.
-*   **Instant Search**: Find movies, TV shows, or your favorite actors in milliseconds.
-*   **Adaptive Design**: Whether on a 4K monitor or a mobile phone, the layout flows perfectly.
-*   **Smart Discovery**: Filter by Genre, Year, or Type and watch the grid update instantly without a page reload.
-*   **Personalized**: A functional "My List" and "Watch History" that remembers where you left off.
+[**Live Demo**](https://itzzharshil.github.io/MovieDeck/)
 
 ---
 
-## 📸 Preview
+## What is this?
 
-<div align="center">
-  <img src="assets/images/banner.png" alt="Desktop Preview" style="border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-</div>
+I built MovieDeck because most movie apps feel clunky. I wanted something that gives you everything in one place—trailers, reviews, cast details, and recommendations—without jumping through hoops.
 
----
+It's a Single Page Application (SPA) that pulls data from the TMDB API. No backend, just pure frontend magic.
 
-## 🚀 Getting Started
-
-Want to run this locally? It's incredibly simple.
-
-1.  **Clone the repo**
-    ```sh
-    git clone https://github.com/itzzharshil/MovieDeck.git
-    ```
-2.  **Open `index.html`**
-    That's it! No build servers, no complex dependencies. Just pure web goodness.
+### Key Features
+- **Glassmorphism Design:** A modern, translucent UI that feels premium.
+- **Unified Experience:** Watch trailers, read reviews, and check cast details all in one modal.
+- **Smart Discovery:** "More Like This" recommendations just like the major streaming platforms.
+- **Instant Search:** Find movies, TV shows, or actors instantly.
+- **My List:** Save your favorites to watch later (uses local storage).
+- **Responsive:** Optimized for mobile, tablet, and desktop.
 
 ---
 
-## 🤝 Contributing
+## Sneak Peek
 
-This is a portfolio project, but I love seeing how others would improve it!
+Here's a look at the library interface:
 
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+![Library Preview](assets/images/hero-image.png)
 
 ---
 
-<p align="center">
-  <i>Built with ❤️ by Harshil</i>
-</p>
+## How to Run it
+
+If you want to poke around the code:
+
+1. Clone it:
+   ```sh
+   git clone https://github.com/itzzharshil/MovieDeck.git
+   ```
+2. Open `index.html` in your browser.
+
+That's literally it. No `npm install`, no complex build steps. I kept it simple on purpose.
+
+---
+
+## Credits
+
+- Data provided by [The Movie DB](https://www.themoviedb.org/)
+- Icons by FontAwesome
+- Inspired by the best parts of Netflix, Disney+, and Apple TV interfaces.
+
+---
+
+_Built by Harshil._
