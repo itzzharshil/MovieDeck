@@ -142,6 +142,12 @@ async function loadContent(type) {
     // Wait for all fetches
     await Promise.all(promises);
     
+    // Clear any inline margins left over from Explore/My List/Search
+    const mainContainer = document.getElementById("main-content");
+    if (mainContainer) {
+        mainContainer.style.marginTop = "";
+    }
+
     // Hide Loader
     if(loader) loader.classList.add("hidden");
 }
