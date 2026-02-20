@@ -60,4 +60,4 @@ While MovieDeck is fully functional, here are some ideas for future growth:
 
 ---
 
-_Built by Harshil._
+_Built with ❤️ by Harshil._
