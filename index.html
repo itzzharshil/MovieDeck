@@ -27,7 +27,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"></noscript>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=6" />
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/2503/2503508.png">
     <link rel="canonical" href="https://moviedeck.xyz" />
@@ -49,6 +49,14 @@
   <body>
     <!-- ADBLOCK MESSAGE -->
     <!-- ADBLOCK MODAL -->
+    <!-- GLOBAL LOADER -->
+    <div id="global-loader">
+        <div class="loader-content">
+            <div class="logo-loader">MovieDeck</div>
+            <div class="loader"></div>
+        </div>
+    </div>
+
     <div id="adblock-msg" class="adblock-overlay">
         <div class="adblock-card">
             <div class="adblock-icon-large">
@@ -138,12 +146,6 @@
           premium, glassmorphism-inspired interface. Create your watchlist, view trailers, 
           and track your favorite entertainment—all in one place.
         </p>
-        <!-- SEO Keyword Block (Visible but unobtrusive) -->
-        <p style="font-size: 0.8rem; color: #aaa; margin-top: 10px; max-width: 600px;">
-           Discover top-rated <strong>movies</strong>, binge-worthy <strong>TV series</strong>, and 
-           explore a vast database of entertainment. From <strong>action</strong> to <strong>romance</strong>, 
-           <strong>sci-fi</strong> to <strong>documentaries</strong>, MovieDeck brings the theater experience to your screen.
-        </p>
         <div id="hero-buttons" style="display: none; margin-top: 20px;">
           <button
             class="btn btn-white"
@@ -187,14 +189,14 @@
               <button class="btn btn-grey" onclick="playTrailer(currentModalItem)">
                 <i class="fas fa-film"></i> Trailer
               </button>
-              <button class="btn btn-grey btn-icon-only" onclick="addToWishlistModal()">
-                <i class="fas fa-plus"></i>
+              <button class="btn btn-grey" onclick="addToWishlistModal()">
+                <i class="fas fa-plus"></i> My List
               </button>
               <button class="btn btn-grey" onclick="showCast(currentModalItem)">
                 <i class="fas fa-users"></i> Cast
               </button>
-              <button class="btn btn-grey btn-icon-only" onclick="shareContent()">
-                <i class="fas fa-share-alt"></i>
+              <button class="btn btn-grey" onclick="shareContent()">
+                <i class="fas fa-share-alt"></i> Share
               </button>
             </div>
           </div>
@@ -269,10 +271,10 @@
     </div>
 
     <div id="trailer-overlay" class="video-overlay" onclick="closeTrailer()">
+      <div class="video-close-btn" onclick="closeTrailer()">
+        <i class="fas fa-times"></i>
+      </div>
       <div class="video-container" onclick="event.stopPropagation()">
-        <button class="video-back-btn" onclick="closeTrailer()">
-            <i class="fas fa-arrow-left"></i> Back
-        </button>
         <iframe id="trailer-frame" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
       </div>
     </div>
@@ -367,6 +369,6 @@
         </div>
     </div>
 
-    <script src="script.js" defer></script>
+    <script src="script.js?v=2" defer></script>
   </body>
 </html>

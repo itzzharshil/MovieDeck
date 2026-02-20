@@ -260,7 +260,7 @@ body {
   margin-left: 40px;
   max-width: 700px;
   padding-top: clamp(120px, 20vh, 220px);
-  padding-left: 0;
+  padding-left: 0;  
 }
 .hero-title {
   font-size: clamp(2.5rem, 5vw, 4.5rem);
@@ -388,19 +388,20 @@ body {
 
 @media (max-width: 768px) {
     #main-content {
-        margin-top: 40px; /* ADDED SPACE: Prevent overlap with tall hero content */
+        margin-top: 150px; /* INCREASED SPACE: Prevent overlap with tall hero content */
     }
     .hero {
         min-height: auto; /* Let content dictate height on mobile */
         height: auto;
-        padding-bottom: 100px; /* INCREASED PADDING: Ensure buttons clear the fold */
+        padding-bottom: 150px; /* INCREASED PADDING: Ensure buttons clear the fold */
         display: block; /* Stack content normally */
     }
     .hero-content {
-        padding-top: 100px;
+        padding-top: 200px;
         margin-left: 20px;
         margin-right: 20px; /* Prevent horizontal overflow */
         max-width: 100%;
+        padding-bottom: 0px; /* Extra space below buttons */
     }
     .hero-title {
         font-size: 2rem;
@@ -495,7 +496,7 @@ body {
 .modal-gradient {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, transparent 20%, rgba(20, 20, 30, 0.8) 80%, rgba(20, 20, 30, 1) 100%);
+    background: linear-gradient(to bottom, transparent 20%, rgba(20, 20, 30, 0.8) 80%, rgba(20, 20, 30, 0.95) 100%);
     z-index: 1;
 }
 
@@ -1088,16 +1089,57 @@ body {
   backdrop-filter: blur(10px);
 }
 
-.skeleton {
-  background: #222;
-  background: linear-gradient(90deg, #222 25%, #2a2a2a 50%, #222 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 8px;
+/* --- LOADER (Prime Style) --- */
+#global-loader {
+    position: fixed;
+    inset: 0;
+    background: #050510;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
 }
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+#global-loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+.loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+.logo-loader {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(45deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 2px;
+}
+
+.loader-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    width: 100%;
+}
+
+.loader {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 255, 255, 0.1);
+    border-top: 5px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .modal-tabs {
@@ -1190,6 +1232,9 @@ body {
   font-weight: 700;
   color: var(--primary);
   font-size: 1.1rem;
+  flex: 1;
+  word-break: break-word;
+  padding-right: 15px;
 }
 .review-avatar {
     width: 45px;
@@ -1217,8 +1262,14 @@ body {
   line-height: 1.8;
   font-size: 1rem;
   white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .review-content.expanded {
+    display: block;
     max-height: none;
 }
 .read-more-btn {
@@ -1294,7 +1345,8 @@ body {
     }
     .hero-desc {
         -webkit-line-clamp: 2;
-        font-size: 0.85rem;
+  line-clamp: 2;
+  font-size: 0.85rem;
         margin-bottom: 10px;
         max-width: 550px;
     }
@@ -1626,4 +1678,31 @@ body {
     color: white;
     transform: none;
     box-shadow: none;
+}
+
+/* Toast Message */
+.toast-message {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 12px 25px;
+    border-radius: 30px;
+    border: 1px solid var(--primary);
+    box-shadow: 0 5px 20px rgba(0, 242, 255, 0.3);
+    font-weight: 600;
+    font-size: 0.95rem;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    backdrop-filter: blur(10px);
+    pointer-events: none;
+}
+.toast-message.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    visibility: visible;
 }

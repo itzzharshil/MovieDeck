@@ -3,6 +3,7 @@ const IMG = "https://image.tmdb.org/t/p/w500";
 const BACK = "https://image.tmdb.org/t/p/original";
 const KEY = "4803cc94c4172a32fc2851dda48d254f"; // User's API Key
 
+let modalZIndex = 5000;
 let currentModalItem = null;
 let searchActive = false;
 let heroInterval;
@@ -96,42 +97,53 @@ function setActiveNav(id) {
 }
 
 async function loadContent(type) {
+    // Show Loader
+    const loader = document.getElementById("global-loader");
+    if(loader) loader.classList.remove("hidden");
+    
     const container = document.getElementById("main-content");
-    // container.style.marginTop = "-100px"; // Moved to CSS for responsivenes
     document.getElementById("hero").style.display = "flex";
     container.innerHTML = "";
+    
+    let promises = [];
 
     if (type === "home") {
         document.title = "MovieDeck - Home";
         setActiveNav("nav-home");
-        await setupHeroSlideshow("/trending/all/day");
-        createRow("Trending Now", "/trending/all/day");
-        loadRecentlyViewed();
-        createRow("Top Rated", "/movie/top_rated", "movie");
-        createRow("Action", "/discover/movie?with_genres=28", "movie");
-        createRow("Sci-Fi", "/discover/movie?with_genres=878", "movie");
-        createRow("Horror", "/discover/movie?with_genres=27", "movie");
-        createRow("Animation", "/discover/movie?with_genres=16", "movie");
-        createRow("Romance", "/discover/movie?with_genres=10749", "movie");
-        createRow("Documentary", "/discover/movie?with_genres=99", "movie");
+        promises.push(setupHeroSlideshow("/trending/all/day"));
+        promises.push(createRow("Trending Now", "/trending/all/day"));
+        loadRecentlyViewed(); // Sync, local storage
+        promises.push(createRow("Top Rated", "/movie/top_rated", "movie"));
+        promises.push(createRow("Action", "/discover/movie?with_genres=28", "movie"));
+        promises.push(createRow("Sci-Fi", "/discover/movie?with_genres=878", "movie"));
+        promises.push(createRow("Horror", "/discover/movie?with_genres=27", "movie"));
+        promises.push(createRow("Animation", "/discover/movie?with_genres=16", "movie"));
+        promises.push(createRow("Romance", "/discover/movie?with_genres=10749", "movie"));
+        promises.push(createRow("Documentary", "/discover/movie?with_genres=99", "movie"));
     } else if (type === "tv") {
         document.title = "MovieDeck - TV Series";
         setActiveNav("nav-tv");
-        await setupHeroSlideshow("/trending/tv/day");
-        createRow("Popular Series", "/tv/popular", "tv");
+        promises.push(setupHeroSlideshow("/trending/tv/day"));
+        promises.push(createRow("Popular Series", "/tv/popular", "tv"));
         loadRecentlyViewed();
-        createRow("Top Rated TV", "/tv/top_rated", "tv");
-        createRow("Sci-Fi & Fantasy", "/discover/tv?with_genres=10765", "tv");
-        createRow("Reality", "/discover/tv?with_genres=10764", "tv");
+        promises.push(createRow("Top Rated TV", "/tv/top_rated", "tv"));
+        promises.push(createRow("Sci-Fi & Fantasy", "/discover/tv?with_genres=10765", "tv"));
+        promises.push(createRow("Reality", "/discover/tv?with_genres=10764", "tv"));
     } else if (type === "movie") {
         document.title = "MovieDeck - Movies";
         setActiveNav("nav-movie");
-        await setupHeroSlideshow("/trending/movie/day");
-        createRow("Popular Movies", "/movie/popular", "movie");
+        promises.push(setupHeroSlideshow("/trending/movie/day"));
+        promises.push(createRow("Popular Movies", "/movie/popular", "movie"));
         loadRecentlyViewed();
-        createRow("Comedy", "/discover/movie?with_genres=35", "movie");
-        createRow("Family", "/discover/movie?with_genres=10751", "movie");
+        promises.push(createRow("Comedy", "/discover/movie?with_genres=35", "movie"));
+        promises.push(createRow("Family", "/discover/movie?with_genres=10751", "movie"));
     }
+    
+    // Wait for all fetches
+    await Promise.all(promises);
+    
+    // Hide Loader
+    if(loader) loader.classList.add("hidden");
 }
 
 async function setupHeroSlideshow(endpoint) {
@@ -140,12 +152,12 @@ async function setupHeroSlideshow(endpoint) {
     const heroDesc = document.getElementById("hero-desc");
     const heroButtons = document.getElementById("hero-buttons");
     
-    heroTitle.innerText = "";
-    heroTitle.className = "hero-title skeleton skeleton-text";
-    heroTitle.style.width = "50%";
+    heroTitle.innerText = "Loading...";
+    heroTitle.className = "hero-title";
+    heroTitle.style.width = "";
     
     heroDesc.innerText = "";
-    heroDesc.className = "hero-desc skeleton skeleton-text";
+    heroDesc.className = "hero-desc";
     heroDesc.style.width = "80%";
     heroDesc.style.height = "60px";
     
@@ -208,7 +220,6 @@ async function setupHeroSlideshow(endpoint) {
         }
     } catch (e) {
          heroTitle.innerText = "Error Loading";
-         heroTitle.classList.remove("skeleton", "skeleton-text");
     }
 }
 
@@ -279,8 +290,8 @@ async function loadGrid(title, endpoint, type) {
         <div class="category-row">
             <h2>${title}</h2>
             <div class="row-posters" id="grid-posters" style="flex-wrap:wrap; overflow:visible;"></div>
-            <div id="grid-loader" style="text-align:center; padding:20px; display:none;">
-               <div class="skeleton" style="width:50px; height:50px; border-radius:50%; margin:auto;"></div>
+            <div id="grid-loader" class="loader-container" style="display:none;">
+               <div class="loader"></div>
             </div>
         </div>
     `;
@@ -354,11 +365,7 @@ async function createRow(title, endpoint, forcedType = null) {
     
     container.appendChild(section);
     
-    for (let i = 0; i < 6; i++) {
-        const skel = document.createElement("div");
-        skel.className = "skeleton skeleton-poster";
-        postersDiv.appendChild(skel);
-    }
+
 
     try {
         const url = endpoint.includes("?")
@@ -530,6 +537,8 @@ async function openModal(m, forcedType = null) {
     document.title = `${m.title || m.name} - MovieDeck`; // SEO Title Update
 
     const modal = document.getElementById("modal");
+    modalZIndex++;
+    modal.style.zIndex = modalZIndex;
     modal.style.display = "flex";
     document.body.style.overflow = "hidden";
 
@@ -1035,6 +1044,8 @@ async function openPerson(id) {
     document.getElementById("modal").style.display = "none";
     
     const pModal = document.getElementById("person-modal");
+    modalZIndex++;
+    pModal.style.zIndex = modalZIndex;
     pModal.style.display = "flex";
     document.body.style.overflow = "hidden";
     
@@ -1080,12 +1091,20 @@ async function openPerson(id) {
             if(m.poster_path) {
                 let type = m.media_type || (m.title ? "movie" : "tv");
                 const el = createPosterElement(m, type, "rec-card");
-                // Modify click to close person modal or just open movie modal on top?
-                // For simplicity, let's close person modal when opening a movie
-                el.onclick = () => {
-                   closePersonModal({target: {id: 'close-btn'}});
-                   openModal(m, type);
-                };
+                // Override the img's onclick from createPosterElement
+                const img = el.querySelector('img');
+                if (img) {
+                    img.onclick = (e) => {
+                        e.stopPropagation();
+                        // Close person modal safely
+                        document.getElementById("person-modal").style.display = "none";
+                        document.body.style.overflow = "auto";
+                        resetPersonModalLayout();
+                        // Open new modal
+                        openModal(m, type);
+                    };
+                }
+
                 grid.appendChild(el);
             }
         });
@@ -1097,7 +1116,8 @@ async function openPerson(id) {
 }
 
 function closePersonModal(e) {
-    if (e.target.id === "person-modal" || e.target.closest(".modal-close") || (e.target.id && e.target.id === 'close-btn')) {
+    if (!e || !e.target) return;
+    if (e.target.id === "person-modal" || (typeof e.target.closest === "function" && e.target.closest(".modal-close")) || e.target.id === 'close-btn') {
         document.getElementById("person-modal").style.display = "none";
         document.body.style.overflow = "auto";
         
@@ -1110,6 +1130,8 @@ async function showCast(item) {
     
     document.getElementById("modal").style.display = "none";
     const pModal = document.getElementById("person-modal");
+    modalZIndex++;
+    pModal.style.zIndex = modalZIndex;
     pModal.style.display = "flex";
     document.body.style.overflow = "hidden";
     
@@ -1263,14 +1285,24 @@ function shareContent() {
     if (!currentModalItem) return;
     
     const type = currentModalItem.media_type || (currentModalItem.title ? "movie" : "tv");
+    const name = currentModalItem.title || currentModalItem.name;
     const url = `${window.location.origin}${window.location.pathname}#${type}/${currentModalItem.id}`;
     
-    navigator.clipboard.writeText(url).then(() => {
-        showToast("Link Copied!");
-    }).catch(err => {
-        console.error('Failed to copy: ', err);
-        showToast("Failed to copy link");
-    });
+    if (navigator.share) {
+        navigator.share({
+            title: `${name} - MovieDeck`,
+            text: `Check out ${name} on MovieDeck!`,
+            url: url
+        }).catch(console.error);
+    } else {
+        // Fallback to clipboard copy
+        navigator.clipboard.writeText(url).then(() => {
+            showToast("Link Copied!");
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            showToast("Failed to copy link");
+        });
+    }
 }
 
 function showToast(message) {
@@ -1361,6 +1393,8 @@ function showTextModal(type) {
     if (content) {
         title.innerText = content.title;
         body.innerHTML = content.body;
+        modalZIndex++;
+        modal.style.zIndex = modalZIndex;
         modal.style.display = "flex";
         document.body.style.overflow = "hidden";
     }
