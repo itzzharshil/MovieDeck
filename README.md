@@ -4,7 +4,7 @@
 
 A personal project where I experimented with glassmorphism UI design. I wanted to build a movie streaming interface that rivals the big players like Netflix, Prime Video, and Apple TV—but feels even smoother.
 
-[**Live Demo**](https://moviedeck.xyz)
+[**Check it out**](https://moviedeck.xyz)
 
 ---
 
