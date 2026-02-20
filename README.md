@@ -30,19 +30,25 @@ Here's a look at the library interface:
 
 ![Library Preview](assets/images/hero-image.png)
 
+
+
+## Challenges
+
+Building MovieDeck involved overcoming a few interesting technical hurdles:
+- **Managing API Rate Limits & Concurrency:** Balancing rapid content loading for multiple categories while respecting the TMDB API rate limits. This required careful promise resolution and deferring non-critical fetches.
+- **Performance with Glassmorphism:** CSS backdrop filters can be heavy on mobile GPUs. A major challenge was optimizing the glassmorphic modal backgrounds and navbar to ensure they render smoothly across budget devices without dropping frames.
+- **Graceful Fallbacks:** Handling irregular data from the API (such as missing posters, missing trailers, or incomplete metadata) without breaking the visual grid or user experience.
+- **Z-Index Management:** Structuring the floating UI elements, pop-out posters, video player overlays, and dynamic modals to ensure perfect stacking orders and avoid overlaps.
+
 ---
 
-## How to Run it
+## Future Enhancements
 
-If you want to poke around the code:
-
-1. Clone it:
-   ```sh
-   git clone https://github.com/itzzharshil/MovieDeck.git
-   ```
-2. Open `index.html` in your browser.
-
-That's literally it. No `npm install`, no complex build steps. I kept it simple on purpose.
+While MovieDeck is fully functional, here are some ideas for future growth:
+- **User Authentication:** Introduce account creation so users can sync their "My List" across multiple devices instead of relying solely on local storage.
+- **Next.js Transition:** Migrate the SPA into a framework like Next.js for server-side rendering (SSR) and vastly improved SEO capabilities.
+- **Enhanced Video Player:** Build out a more robust, fully customized wrapper around the video embeds to unify the playback experience.
+- **Advanced Filtering:** Allow deeper catalog exploration with filters for specific actors, directors, or granular user ratings.
 
 ---
 
