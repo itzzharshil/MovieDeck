@@ -96,13 +96,13 @@ body {
 }
 
 .nav-link {
-  color: var(--text-secondary); /* Applied to the <a> tag now */
+  color: var(--text-secondary);
   font-weight: 500;
   cursor: pointer;
   transition: color 0.3s;
   font-size: 0.95rem;
-  text-decoration: none; /* Remove underline for <a> */
-  display: block; /* Ensure hit area */
+  text-decoration: none;
+  display: block;
   padding: 8px 10px;
   border-radius: 20px;
 }
@@ -193,7 +193,7 @@ body {
   background: rgba(20, 20, 30, 0.9);
   backdrop-filter: blur(15px);
   border: 1px solid var(--glass-border);
-  width: 220px; /* Slightly wider */
+  width: 220px;
   display: none;
   flex-direction: column;
   padding: 10px 0;
@@ -201,7 +201,6 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   z-index: 2000;
 }
-/* Invisible bridge to prevent menu from closing when moving mouse from icon to menu */
 .profile-dropdown::before {
     content: '';
     position: absolute;
@@ -237,8 +236,8 @@ body {
 
 .hero {
   width: 100%;
-  min-height: 90vh;
-  padding-bottom: 150px; /* Reduced overlap risk: space for content + negative margin overlap */
+  min-height: 85vh;
+  padding-bottom: 0px;
   position: relative;
   background-size: cover;
   background-position: center;
@@ -259,13 +258,14 @@ body {
   z-index: 10;
   margin-left: 40px;
   max-width: 700px;
-  padding-top: clamp(120px, 20vh, 220px);
+  padding-top: clamp(100px, 15vh, 180px);
+  padding-bottom: 180px;
   padding-left: 0;  
 }
 .hero-title {
   font-size: clamp(2.5rem, 5vw, 4.5rem);
   font-weight: 800;
-  margin-bottom: 20px;
+  margin-bottom: 0px;
   line-height: 1.1;
   text-shadow: 0 0 20px rgba(0,0,0,0.8);  
   background: linear-gradient(45deg, #fff, #ccc);
@@ -356,11 +356,11 @@ body {
     box-shadow: 0 8px 25px rgba(0,0,0,0.6);
 }
 
-/* Main Content spacing */
 #main-content {
-    margin-top: -100px; /* Default overlap for desktop */
+    margin-top: -120px;
     position: relative;
     z-index: 20;
+    min-height: 500px;
     transition: margin-top 0.3s;
 }
 
@@ -371,37 +371,39 @@ body {
   padding-bottom: 0;
 }
 
-/* Remove the extra negative margin on first child since we use #main-content now */
 #main-content .category-row:first-child {
     margin-top: 0; 
 }
 
-/* RESPONSIVE LAYOUT FIXES */
 @media (max-width: 1024px) {
     #main-content {
-        margin-top: -30px; /* Reduced overlap from -50px to -30px for safer spacing */
+        margin-top: -80px;
     }
     .hero {
-        padding-bottom: 100px; /* Ensure space for the -30px overlap */
+        padding-bottom: 0px;
+        min-height: 70vh;
+    }
+    .hero-content {
+        padding-bottom: 120px;
     }
 }
 
 @media (max-width: 768px) {
     #main-content {
-        margin-top: 150px; /* INCREASED SPACE: Prevent overlap with tall hero content */
+        margin-top: -40px;
     }
     .hero {
-        min-height: auto; /* Let content dictate height on mobile */
+        min-height: auto; 
         height: auto;
-        padding-bottom: 150px; /* INCREASED PADDING: Ensure buttons clear the fold */
-        display: block; /* Stack content normally */
+        padding-bottom: 0px;
+        display: block; 
     }
     .hero-content {
-        padding-top: 200px;
+        padding-top: 150px;
         margin-left: 20px;
-        margin-right: 20px; /* Prevent horizontal overflow */
+        margin-right: 20px; 
         max-width: 100%;
-        padding-bottom: 0px; /* Extra space below buttons */
+        padding-bottom: 80px;
     }
     .hero-title {
         font-size: 2rem;
@@ -726,7 +728,6 @@ body {
     white-space: nowrap;
     font-size: 1rem;
 }
-/* Icon-only buttons */
 .modal-buttons .btn-icon-only {
      width: 50px;
      padding: 0;
@@ -906,7 +907,6 @@ body {
   .nav-icon {
       font-size: 1.1rem;
   }
-  /* Push search icon away if needed, or just rely on gap */
   .hero-content {
       padding-top: 120px;
       margin-left: 20px;
@@ -966,7 +966,6 @@ body {
       margin-left: 20px;
       font-size: 1.2rem;
   }
-  /* Remove negative overlap on mobile */
   #main-content .category-row:first-child {
       margin-top: 0;
   }
@@ -1013,8 +1012,6 @@ body {
       grid-column: 1 / -1; 
       order: 1;
   }
-  
-  /* Row 2: Trailer & Cast */
   .modal-buttons .btn:nth-child(2) {
       order: 2;
   }
@@ -1022,7 +1019,6 @@ body {
       order: 3;
   }
   
-  /* Row 3: Plus & Share */
   .modal-buttons .btn:nth-child(3) { 
       order: 4;
   }
@@ -1089,7 +1085,6 @@ body {
   backdrop-filter: blur(10px);
 }
 
-/* --- LOADER (Prime Style) --- */
 #global-loader {
     position: fixed;
     inset: 0;
@@ -1326,7 +1321,6 @@ body {
     margin-top: 0;
 }
 
-/* --- PROFILE SELECTION REMOVED --- */
 
 @media screen and (max-height: 500px) and (orientation: landscape) {
     .hero {
@@ -1364,11 +1358,10 @@ body {
     }
 }
 
-/* --- FOOTER STYLES --- */
 .site-footer {
     background: rgba(5, 5, 10, 0.95);
     border-top: 1px solid var(--glass-border);
-    padding: 60px 40px 30px; /* Reduced vertical padding */
+    padding: 60px 40px 30px;
     margin-top: 50px;
     position: relative;
     z-index: 100;
@@ -1378,14 +1371,14 @@ body {
 .footer-content {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start; /* changed from center to flex-start for better alignment */
+    align-items: flex-start;
     flex-wrap: wrap;
     gap: 40px;
     max-width: 1400px;
     margin: 0 auto;
     margin-bottom: 40px;
-    padding-bottom: 30px; /* spacing above bottom line */
-    border-bottom: 1px solid var(--glass-border); /* divider line */
+    padding-bottom: 30px;
+    border-bottom: 1px solid var(--glass-border);
 }
 
 .footer-brand {
@@ -1396,7 +1389,7 @@ body {
 .footer-brand .logo {
     margin-bottom: 15px;
     display: inline-block;
-    font-size: 2rem; /* Larger logo */
+    font-size: 2rem;
 }
 
 .footer-brand p {
@@ -1460,7 +1453,7 @@ body {
     bottom: 0;
     left: 0;
     width: 30px;
-    height: 3px; /* thicker underline */
+    height: 3px;
     background: var(--secondary);
     border-radius: 2px;
     box-shadow: 0 0 10px var(--secondary);
@@ -1478,7 +1471,7 @@ body {
 
 .footer-column a:hover {
     color: var(--primary);
-    transform: translateX(5px); /* Slide effect */
+    transform: translateX(5px);
     text-shadow: 0 0 8px rgba(0, 242, 255, 0.4);
 }
 
@@ -1507,7 +1500,7 @@ body {
 @media (max-width: 768px) {
     .site-footer {
         padding: 40px 20px 20px;
-        margin-bottom: 80px; /* space for mobile nav? no, mobile nav is overlay usually, but check sticky needs */
+        margin-bottom: 80px;
     }
     
     .footer-content {
@@ -1527,7 +1520,6 @@ body {
     }
 }
 
-/* --- TEXT MODAL (PRIVACY, ETC) --- */
 .text-modal-card {
     width: 700px;
     max-width: 90%;
@@ -1598,7 +1590,6 @@ body {
 }
 
 
-/* --- ADBLOCK BANNER (Reverted) --- */
 .adblock-overlay {
     position: fixed;
     bottom: 20px;
@@ -1607,7 +1598,7 @@ body {
     height: auto;
     background: transparent;
     z-index: 9999;
-    display: none; /* Hidden by default */
+    display: none;
     align-items: flex-end;
     justify-content: flex-end;
     animation: slideIn 0.5s ease forwards;
@@ -1665,7 +1656,7 @@ body {
     padding: 5px 10px;
     border-radius: 6px;
     font-size: 0.8rem;
-    margin-top: 5px; /* Adjust if needed or remove if using X icon */
+    margin-top: 5px;
     position: absolute;
     top: 10px;
     right: 10px;
@@ -1680,7 +1671,6 @@ body {
     box-shadow: none;
 }
 
-/* Toast Message */
 .toast-message {
     position: fixed;
     bottom: 30px;

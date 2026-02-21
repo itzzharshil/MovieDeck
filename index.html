@@ -7,14 +7,13 @@
     <meta name="description" content="MovieDeck is a premium, glassmorphism-styled movie and TV show explorer. Discover trending content, watch trailers, and track your favorites." />
     <meta name="keywords" content="movies, tv shows, streaming, glassmorphism, entertainment, film, series, tmdb" />
     <meta name="author" content="MovieDeck" />
+    <meta name="author" content="MovieDeck" />
 
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="MovieDeck - Premium Streaming Experience" />
     <meta property="og:description" content="Discover trending content, watch trailers, and track your favorites on MovieDeck." />
     <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/2503/2503508.png" />
 
-    <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:title" content="MovieDeck - Premium Streaming Experience" />
     <meta property="twitter:description" content="Discover trending content, watch trailers, and track your favorites on MovieDeck." />
@@ -25,6 +24,9 @@
     />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
+    <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
+    <link rel="prefetch" href="https://api.themoviedb.org/3/trending/all/day?api_key=4803cc94c4172a32fc2851dda48d254f">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="style.css?v=6" />
@@ -47,9 +49,6 @@
     </script>
   </head>
   <body>
-    <!-- ADBLOCK MESSAGE -->
-    <!-- ADBLOCK MODAL -->
-    <!-- GLOBAL LOADER -->
     <div id="global-loader">
         <div class="loader-content">
             <div class="logo-loader">MovieDeck</div>
@@ -163,15 +162,7 @@
       </div>
     </header>
 
-    <div
-      id="main-content"
-      style="
-        margin-top: -100px;
-        position: relative;
-        z-index: 20;
-        min-height: 500px;
-      "
-    ></div>
+    <div id="main-content"></div>
 
     <div class="modal-overlay" id="modal" onclick="closeModal(event)">
       <div class="modal-card">
@@ -256,7 +247,6 @@
         
         <iframe id="video-frame" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
         
-        <!-- Episode Nav -->
         <div class="episode-nav" id="episode-nav" style="display: none; justify-content: center; padding: 15px;">
             <button onclick="prevEpisode()" id="btn-prev-ep" class="btn btn-grey" style="padding: 5px 15px; font-size: 0.9rem;">
                 <i class="fas fa-chevron-left"></i> Prev
@@ -279,7 +269,6 @@
       </div>
     </div>
 
-    <!-- PERSON MODAL -->
     <div class="modal-overlay" id="person-modal" onclick="closePersonModal(event)">
         <div class="modal-card">
             <button class="modal-close" onclick="closePersonModal(event)">
@@ -309,9 +298,7 @@
             </div>
         </div>
     </div>
-
-    <!-- API MODAL -->
-    <!-- Profile Management Modal Removed -->
+    </div>
 
     <footer class="site-footer">
         <div class="footer-content">
@@ -354,7 +341,6 @@
         </div>
     </footer>
 
-    <!-- GENERIC TEXT MODAL -->
     <div id="text-modal" class="modal-overlay" onclick="closeTextModal(event)">
         <div class="modal-card text-modal-card">
             <div class="modal-header">
@@ -364,7 +350,6 @@
                 </div>
             </div>
             <div class="modal-body" id="tm-body">
-                <!-- Content injected by JS -->
             </div>
         </div>
     </div>

@@ -1,15 +1,13 @@
 const BASE = "https://api.themoviedb.org/3";
-const IMG = "https://image.tmdb.org/t/p/w500";
-const BACK = "https://image.tmdb.org/t/p/original";
-const KEY = "4803cc94c4172a32fc2851dda48d254f"; // User's API Key
+const IMG = "https://image.tmdb.org/t/p/w342";
+const BACK = "https://image.tmdb.org/t/p/w1280"; 
+const KEY = "4803cc94c4172a32fc2851dda48d254f"; 
 
 let modalZIndex = 5000;
 let currentModalItem = null;
 let searchActive = false;
 let heroInterval;
 
-
-// --- SINGLE PROFILE MODE ---
 const currentProfileId = 'user_default'; 
 
 window.onload = () => {
@@ -17,15 +15,13 @@ window.onload = () => {
         sessionStorage.setItem("fixed_v1", "true");
     }
     init();
-    setTimeout(showAdblockMsg, 2000); // Show after 2 seconds
+    setTimeout(showAdblockMsg, 2000); 
 };
 
 function showAdblockMsg() {
-    // Show always for now so the user can see it
     const msg = document.getElementById("adblock-msg");
     if(msg) {
         msg.style.display = "flex";
-        // sessionStorage.setItem("adblock_msg_shown", "true"); // Disabled for testing
     }
 }
 
@@ -64,7 +60,6 @@ function resetApp() {
     }
 }
 
-// --- HELPER KEYS ---
 function getHistoryKey() {
     return `history_${currentProfileId}`;
 }
@@ -105,51 +100,58 @@ async function loadContent(type) {
     document.getElementById("hero").style.display = "flex";
     container.innerHTML = "";
     
-    let promises = [];
-
+    // Start the hero fetch concurrently
+    let heroPromise;
     if (type === "home") {
         document.title = "MovieDeck - Home";
         setActiveNav("nav-home");
-        promises.push(setupHeroSlideshow("/trending/all/day"));
-        promises.push(createRow("Trending Now", "/trending/all/day"));
-        loadRecentlyViewed(); // Sync, local storage
-        promises.push(createRow("Top Rated", "/movie/top_rated", "movie"));
-        promises.push(createRow("Action", "/discover/movie?with_genres=28", "movie"));
-        promises.push(createRow("Sci-Fi", "/discover/movie?with_genres=878", "movie"));
-        promises.push(createRow("Horror", "/discover/movie?with_genres=27", "movie"));
-        promises.push(createRow("Animation", "/discover/movie?with_genres=16", "movie"));
-        promises.push(createRow("Romance", "/discover/movie?with_genres=10749", "movie"));
-        promises.push(createRow("Documentary", "/discover/movie?with_genres=99", "movie"));
+        heroPromise = setupHeroSlideshow("/trending/all/day");
     } else if (type === "tv") {
         document.title = "MovieDeck - TV Series";
         setActiveNav("nav-tv");
-        promises.push(setupHeroSlideshow("/trending/tv/day"));
-        promises.push(createRow("Popular Series", "/tv/popular", "tv"));
-        loadRecentlyViewed();
-        promises.push(createRow("Top Rated TV", "/tv/top_rated", "tv"));
-        promises.push(createRow("Sci-Fi & Fantasy", "/discover/tv?with_genres=10765", "tv"));
-        promises.push(createRow("Reality", "/discover/tv?with_genres=10764", "tv"));
+        heroPromise = setupHeroSlideshow("/trending/tv/day");
     } else if (type === "movie") {
         document.title = "MovieDeck - Movies";
         setActiveNav("nav-movie");
-        promises.push(setupHeroSlideshow("/trending/movie/day"));
-        promises.push(createRow("Popular Movies", "/movie/popular", "movie"));
-        loadRecentlyViewed();
-        promises.push(createRow("Comedy", "/discover/movie?with_genres=35", "movie"));
-        promises.push(createRow("Family", "/discover/movie?with_genres=10751", "movie"));
-    }
-    
-    // Wait for all fetches
-    await Promise.all(promises);
-    
-    // Clear any inline margins left over from Explore/My List/Search
-    const mainContainer = document.getElementById("main-content");
-    if (mainContainer) {
-        mainContainer.style.marginTop = "";
+        heroPromise = setupHeroSlideshow("/trending/movie/day");
     }
 
-    // Hide Loader
-    if(loader) loader.classList.add("hidden");
+    setTimeout(async () => {
+        let promises = [];
+        if (heroPromise) promises.push(heroPromise);
+
+        if (type === "home") {
+            promises.push(createRow("Trending Now", "/trending/all/day"));
+            loadRecentlyViewed();
+            promises.push(createRow("Top Rated", "/movie/top_rated", "movie"));
+            promises.push(createRow("Action", "/discover/movie?with_genres=28", "movie"));
+            promises.push(createRow("Sci-Fi", "/discover/movie?with_genres=878", "movie"));
+            promises.push(createRow("Horror", "/discover/movie?with_genres=27", "movie"));
+            promises.push(createRow("Animation", "/discover/movie?with_genres=16", "movie"));
+            promises.push(createRow("Romance", "/discover/movie?with_genres=10749", "movie"));
+            promises.push(createRow("Documentary", "/discover/movie?with_genres=99", "movie"));
+        } else if (type === "tv") {
+            promises.push(createRow("Popular Series", "/tv/popular", "tv"));
+            loadRecentlyViewed();
+            promises.push(createRow("Top Rated TV", "/tv/top_rated", "tv"));
+            promises.push(createRow("Sci-Fi & Fantasy", "/discover/tv?with_genres=10765", "tv"));
+            promises.push(createRow("Reality", "/discover/tv?with_genres=10764", "tv"));
+        } else if (type === "movie") {
+            promises.push(createRow("Popular Movies", "/movie/popular", "movie"));
+            loadRecentlyViewed();
+            promises.push(createRow("Comedy", "/discover/movie?with_genres=35", "movie"));
+            promises.push(createRow("Family", "/discover/movie?with_genres=10751", "movie"));
+        }
+        
+        await Promise.all(promises);
+    
+        const mainContainer = document.getElementById("main-content");
+        if (mainContainer) {
+            mainContainer.style.marginTop = "";
+        }
+
+        if(loader) loader.classList.add("hidden");
+    }, 100);
 }
 
 async function setupHeroSlideshow(endpoint) {
@@ -228,8 +230,6 @@ async function setupHeroSlideshow(endpoint) {
          heroTitle.innerText = "Error Loading";
     }
 }
-
-// --- HELPER FOR POSTERS ---
 function createPosterElement(m, type, className = "poster-card") {
     const wrapper = document.createElement("div");
     wrapper.className = "poster-wrapper";
@@ -286,7 +286,7 @@ async function loadGrid(title, endpoint, type) {
         title: title
     };
     
-    document.title = `MovieDeck - ${title}`; // SEO Title Update
+    document.title = `MovieDeck - ${title}`;
     
     const container = document.getElementById("main-content");
     container.style.marginTop = "80px";
@@ -539,8 +539,7 @@ async function openModal(m, forcedType = null) {
     addToHistory(m, type);
     currentModalItem = m;
     currentModalItem.media_type = type;
-
-    document.title = `${m.title || m.name} - MovieDeck`; // SEO Title Update
+    document.title = `${m.title || m.name} - MovieDeck`;
 
     const modal = document.getElementById("modal");
     modalZIndex++;
@@ -679,15 +678,12 @@ document.getElementById("search-input").addEventListener("input", (e) => {
                 d.results.forEach((m) => {
                     if (m.poster_path || m.profile_path) {
                         const type = m.media_type;
-                        // Handle Person/Actor results
                         if (type === "person") {
                              const el = createPosterElement(m, type);
                              el.style.margin = "10px";
                              el.onclick = () => openPerson(m.id);
                              document.getElementById("res").appendChild(el);
-                        } 
-                        // Handle Movie/TV results
-                        else if (type === "movie" || type === "tv") {
+                        } else if (type === "movie" || type === "tv") {
                             const el = createPosterElement(m, type);
                             el.style.margin = "10px";
                             document.getElementById("res").appendChild(el);
@@ -726,17 +722,14 @@ let playbackState = {
 function getEmbedUrl() {
     const { type, id, season, episode, server } = playbackState;
     if (server === 'vidsrc') {
-        // Vidsrc VIP
         return type === 'movie' 
             ? `https://vidsrc.vip/embed/movie/${id}`
             : `https://vidsrc.vip/embed/tv/${id}/${season}/${episode}`;
     } else if (server === 'vidsrc2') {
-        // Vidsrc Pro (vidsrc.to)
         return type === 'movie'
             ? `https://vidsrc.to/embed/movie/${id}`
             : `https://vidsrc.to/embed/tv/${id}/${season}/${episode}`;
     } else if (server === 'superembed') {
-        // SuperEmbed / Multiembed
         return type === 'movie'
              ? `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1`
              : `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${season}&e=${episode}`;
@@ -768,7 +761,7 @@ async function playMedia(item) {
         episode: 1,
         season: 1,
         episode: 1,
-        server: 'vidsrc', // Default to VIP
+        server: 'vidsrc',
         title: item.title || item.name
     };
 
@@ -776,7 +769,6 @@ async function playMedia(item) {
     const iframe = document.getElementById("video-frame");
     const title = document.getElementById("video-title");
 
-    // Set title
     if(title) title.innerText = playbackState.title;
     
     updateVideoControls();
@@ -798,7 +790,7 @@ function playEpisode(tvId, season, episode) {
         id: tvId,
         season: parseInt(season),
         episode: parseInt(episode),
-        server: 'vidsrc', // Default to VIP
+        server: 'vidsrc',
         title: '' 
     };
     
@@ -1011,9 +1003,7 @@ async function playTrailer(item) {
         
         let trailer = null;
         if(data.results && data.results.length > 0) {
-            // Find official trailer on YouTube
             trailer = data.results.find(v => v.site === "YouTube" && v.type === "Trailer");
-            // Fallback to any YouTube video if no specific "Trailer" found
             if(!trailer) trailer = data.results.find(v => v.site === "YouTube");
         }
         
@@ -1040,7 +1030,6 @@ function closeTrailer() {
 
 function goBackToMovie() {
     document.getElementById("person-modal").style.display = "none";
-    // Keep body overflow hidden because we are going back to movie modal
     document.getElementById("modal").style.display = "flex";
 }
 
@@ -1082,7 +1071,6 @@ async function openPerson(id) {
         
         const grid = document.getElementById("p-credits-grid");
         
-        // Sort by popularity, filter duplicates, and take top 50 (or all)
         const seen = new Set();
         const cast = (data.cast || [])
             .filter(item => {
@@ -1097,16 +1085,13 @@ async function openPerson(id) {
             if(m.poster_path) {
                 let type = m.media_type || (m.title ? "movie" : "tv");
                 const el = createPosterElement(m, type, "rec-card");
-                // Override the img's onclick from createPosterElement
                 const img = el.querySelector('img');
                 if (img) {
                     img.onclick = (e) => {
                         e.stopPropagation();
-                        // Close person modal safely
                         document.getElementById("person-modal").style.display = "none";
                         document.body.style.overflow = "auto";
                         resetPersonModalLayout();
-                        // Open new modal
                         openModal(m, type);
                     };
                 }
@@ -1178,7 +1163,6 @@ async function showCast(item) {
                     img.style.height = "225px";
                     img.style.width = "150px";
                     img.onclick = () => {
-                         // Open person details - reset layout first
                          resetPersonModalLayout();
                          openPerson(c.id);
                     };
@@ -1234,7 +1218,6 @@ async function loadReviews(type, id) {
                 const card = document.createElement("div");
                 card.className = "review-card";
                 
-                // Avatar handling
                 let avatar = "https://ui-avatars.com/api/?background=random&name=" + encodeURIComponent(r.author);
                 if(r.author_details && r.author_details.avatar_path) {
                     if(r.author_details.avatar_path.startsWith("/http")) {
@@ -1263,7 +1246,6 @@ async function loadReviews(type, id) {
                     </div>
                 `;
                 
-                // Read More logic
                 if(r.content.length > 300) { 
                     const btn = document.createElement("span");
                     btn.className = "read-more-btn";
@@ -1301,7 +1283,6 @@ function shareContent() {
             url: url
         }).catch(console.error);
     } else {
-        // Fallback to clipboard copy
         navigator.clipboard.writeText(url).then(() => {
             showToast("Link Copied!");
         }).catch(err => {
@@ -1352,7 +1333,6 @@ window.addEventListener("load", async () => {
     }
 });
 
-// --- TEXT MODAL LOGIC ---
 const legalContent = {
     privacy: {
         title: "Privacy Policy",
