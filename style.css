@@ -275,7 +275,7 @@ body {
 .hero-title {
   font-size: clamp(2.5rem, 5vw, 4.5rem);
   font-weight: 800;
-  margin-bottom: 0px;
+  margin-bottom: 20px;
   line-height: 1.1;
   text-shadow: 0 0 20px rgba(0,0,0,0.8);  
   background: linear-gradient(45deg, #fff, #ccc);
@@ -283,7 +283,8 @@ body {
   background-clip: text;
   color: white;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  min-height: 160px;
 }
 
 .hero-logo {
@@ -292,7 +293,7 @@ body {
   width: auto;
   height: auto;
   object-fit: contain;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
   display: block;
 }
@@ -308,6 +309,7 @@ body {
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  min-height: 95px;
 }
 .btn {
   padding: 0.8rem 2.2rem;
@@ -991,17 +993,20 @@ body {
   .hero-title {
     font-size: 2.5rem;
     line-height: 1.1;
+    min-height: 110px;
+    margin-bottom: 15px;
   }
   .hero-logo {
     max-width: 300px;
     max-height: 100px;
-    margin-bottom: 15px;
+    margin-bottom: 0;
   }
   .hero-desc {
       font-size: 0.95rem;
       -webkit-line-clamp: 3;
       line-clamp: 3;
       margin-bottom: 20px;
+      min-height: 65px;
   }
   .btn {
       padding: 0.7rem 1.5rem;
