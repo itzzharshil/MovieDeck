@@ -1,3 +1,23 @@
+// --- ANTI-DEBUGGING AND PROTECTION ---
+document.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'F12' || 
+       (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+       (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+       (e.ctrlKey && e.key === 'U') || 
+       (e.ctrlKey && e.shiftKey && e.key === 'C')) {
+        e.preventDefault();
+    }
+});
+setInterval(function() {
+    (function () {
+        return false;
+    }
+    ['constructor']('debugger')
+    ());
+}, 50);
+// -----------------------------------
+
 const BASE = "https://api.themoviedb.org/3";
 const IMG = "https://image.tmdb.org/t/p/w342";
 const BACK = "https://image.tmdb.org/t/p/w1280"; 
