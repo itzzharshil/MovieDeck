@@ -44,7 +44,7 @@ function clearHistory() {
 }
 
 function clearWishlist() {
-    if(confirm("Clear your My List?")) {
+    if(confirm("Clear your Watchlist?")) {
         localStorage.removeItem(getWishlistKey());
         if(document.getElementById("nav-list").classList.contains("active")) {
             loadWishlist();
@@ -455,7 +455,7 @@ function addToWishlist(item, type) {
             media_type: safeType,
         });
         localStorage.setItem(getWishlistKey(), JSON.stringify(list));
-        alert("Added to My List!");
+        alert("Added to Watchlist!");
         
         const currentPage = document.querySelector(".nav-link.active").id;
         if(currentPage === 'nav-home' || currentPage === 'nav-movie' || currentPage === 'nav-tv') {
@@ -494,7 +494,7 @@ function loadWishlist() {
     container.style.marginTop = "80px";
     document.getElementById("hero").style.display = "none";
     container.innerHTML =
-        '<div class="category-row" style="margin-top: 20px;"><h2>My List</h2><div class="row-posters" id="list-row" style="flex-wrap:wrap; overflow:visible;"></div></div>';
+        '<div class="category-row" style="margin-top: 20px;"><h2>Watchlist</h2><div class="row-posters" id="list-row" style="flex-wrap:wrap; overflow:visible;"></div></div>';
 
     const list = JSON.parse(localStorage.getItem(getWishlistKey()) || "[]");
     const row = document.getElementById("list-row");

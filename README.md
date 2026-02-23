@@ -19,7 +19,7 @@ It's a Single Page Application (SPA) that pulls data from the TMDB API. No backe
 - **Unified Experience:** Watch trailers, read reviews, and check cast details all in one modal.
 - **Smart Discovery:** "More Like This" recommendations just like the major streaming platforms.
 - **Instant Search:** Find movies, TV shows, or actors instantly.
-- **My List:** Save your favorites to watch later (uses local storage).
+- **Watchlist:** Save your favorites to watch later (uses local storage).
 - **Responsive:** Optimized for mobile, tablet, and desktop.
 
 ---
@@ -45,7 +45,7 @@ Building MovieDeck involved overcoming a few interesting technical hurdles:
 ## Future Enhancements
 
 While MovieDeck is fully functional, here are some ideas for future growth:
-- **User Authentication:** Introduce account creation so users can sync their "My List" across multiple devices instead of relying solely on local storage.
+- **User Authentication:** Introduce account creation so users can sync their "Watchlist" across multiple devices instead of relying solely on local storage.
 - **Next.js Transition:** Migrate the SPA into a framework like Next.js for server-side rendering (SSR) and vastly improved SEO capabilities.
 - **Enhanced Video Player:** Build out a more robust, fully customized wrapper around the video embeds to unify the playback experience.
 - **Advanced Filtering:** Allow deeper catalog exploration with filters for specific actors, directors, or granular user ratings.

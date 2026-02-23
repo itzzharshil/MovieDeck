@@ -985,7 +985,7 @@ body {
   }
   .hero-content {
       padding-top: 100px;
-      padding-bottom: 40px;
+      padding-bottom: 80px;
       margin-left: 20px;
       margin-right: 20px;
       padding-left: 0;
@@ -1109,17 +1109,14 @@ body {
   }
   
   @media (max-width: 480px) {
-      .modal-buttons .btn .btn-text,
-      .hero-buttons .btn .btn-text {
+      .modal-buttons .btn .btn-text {
           display: none;
       }
-      .modal-buttons .btn i,
-      .hero-buttons .btn i {
+      .modal-buttons .btn i {
           margin-right: 0 !important;
           font-size: 1rem;
       }
-      .modal-buttons .btn,
-      .hero-buttons .btn {
+      .modal-buttons .btn {
           padding: 0 12px;
           min-width: 45px;
       }
