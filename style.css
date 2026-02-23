@@ -717,10 +717,12 @@ body {
   background: #222;
   transition: transform 0.3s;
 }
-.rec-card:hover {
-    transform: scale(1.05);
-    z-index: 10;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+@media (hover: hover) {
+  .rec-card:hover {
+      transform: scale(1.05);
+      z-index: 10;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  }
 }
 
 .poster-wrapper {
@@ -729,10 +731,12 @@ body {
   z-index: 1;
   border-radius: 12px;
 }
-.poster-wrapper:hover {
-  transform: scale(1.1);
-  z-index: 100 !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+@media (hover: hover) {
+  .poster-wrapper:hover {
+    transform: scale(1.1);
+    z-index: 100 !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  }
 }
 
 .cast-wrapper {
@@ -903,12 +907,14 @@ body {
     transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), z-index 0s;
     border-radius: 12px;
 }
-.poster-wrapper:hover {
-    z-index: 1000;
-    transform: scale(1.1) translateY(-10px);
-}
-.poster-wrapper:hover img {
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(var(--primary), 0.4);
+@media (hover: hover) {
+  .poster-wrapper:hover {
+      z-index: 1000;
+      transform: scale(1.1) translateY(-10px);
+  }
+  .poster-wrapper:hover img {
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(var(--primary), 0.4);
+  }
 }
 .list-badge {
     position: absolute;
