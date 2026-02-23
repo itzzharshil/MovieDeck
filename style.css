@@ -1129,10 +1129,10 @@ body {
       }
       .hero-buttons .btn {
           font-size: 0.65rem;
-          padding: 0 4px;
+          padding: 0;
       }
       .hero-buttons .btn i {
-          margin-right: 4px;
+          margin-right: 2px !important;
       }
       .modal-buttons .btn .btn-text {
           display: none;
