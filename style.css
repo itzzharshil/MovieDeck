@@ -1109,6 +1109,31 @@ body {
   }
   
   @media (max-width: 480px) {
+      .navbar {
+          padding: 0 8px;
+      }
+      .logo {
+          font-size: 1.1rem;
+      }
+      .nav-right {
+          gap: 8px;
+      }
+      .nav-icon {
+          font-size: 1rem;
+      }
+      .menu-toggle {
+          font-size: 0.9rem;
+      }
+      span.btn-text {
+          font-size: 0.65rem;
+      }
+      .hero-buttons .btn {
+          font-size: 0.65rem;
+          padding: 0 4px;
+      }
+      .hero-buttons .btn i {
+          margin-right: 4px;
+      }
       .modal-buttons .btn .btn-text {
           display: none;
       }
@@ -1354,7 +1379,7 @@ body {
 .mobile-menu {
     position: fixed;
     top: 0;
-    right: -100%;
+    right: -300px;
     width: 250px;
     height: 100%;
     background: rgba(10, 10, 20, 0.95);
