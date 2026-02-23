@@ -1159,9 +1159,7 @@ async function showCast(item) {
                    
                     const img = document.createElement("img");
                     img.src = `${IMG}${c.profile_path}`;
-                    img.className = "rec-card"; 
-                    img.style.height = "225px";
-                    img.style.width = "150px";
+                    img.className = "rec-card cast-card"; 
                     img.onclick = () => {
                          resetPersonModalLayout();
                          openPerson(c.id);
@@ -1169,14 +1167,11 @@ async function showCast(item) {
                     
                     const name = document.createElement("div");
                     name.innerText = c.name;
-                    name.style.marginTop = "8px";
-                    name.style.color = "#ccc";
-                    name.style.fontSize = "0.9rem";
+                    name.className = "cast-name";
                     
                     wrapper.appendChild(img);
                     wrapper.appendChild(name);
-                    
-                    wrapper.style.margin = "10px";
+                    wrapper.className = "poster-wrapper cast-wrapper";
                     
                     grid.appendChild(wrapper);
                 }

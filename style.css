@@ -1202,8 +1202,35 @@ body {
   .adblock-text p {
       font-size: 0.8rem;
   }
+
+  .cast-wrapper {
+      margin: 5px;
+  }
+  .cast-card {
+      height: 150px;
+      width: 100px;
+  }
+  .cast-name {
+      font-size: 0.75rem;
+      margin-top: 5px;
+  }
 }
 
+.cast-wrapper {
+  margin: 10px;
+  text-align: center;
+}
+.cast-card {
+  height: 225px;
+  width: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.cast-name {
+  margin-top: 8px;
+  color: #ccc;
+  font-size: 0.9rem;
+}
 
 #api-modal {
   position: fixed;
