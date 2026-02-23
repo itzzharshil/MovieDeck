@@ -309,7 +309,7 @@ body {
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 95px;
+  height: 85px;
 }
 .btn {
   padding: 0.8rem 2.2rem;
@@ -1006,7 +1006,7 @@ body {
       -webkit-line-clamp: 3;
       line-clamp: 3;
       margin-bottom: 20px;
-      min-height: 65px;
+      height: 73px;
   }
   .btn {
       padding: 0.7rem 1.5rem;
