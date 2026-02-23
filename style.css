@@ -185,8 +185,8 @@ body {
   cursor: pointer;
 }
 .profile-icon {
-  width: 35px;
-  height: 35px;
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   display: flex;
@@ -1700,7 +1700,7 @@ body {
 @media (max-width: 768px) {
     .site-footer {
         padding: 30px 20px 20px;
-        margin-bottom: 80px;
+        margin-bottom: 0px;
     }
     
     .footer-inline-container {
