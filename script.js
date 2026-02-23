@@ -218,7 +218,7 @@ async function setupHeroSlideshow(endpoint) {
                 }
                 
                 heroDesc.innerText = m.overview;
-                heroButtons.style.display = "block";
+                heroButtons.style.display = "flex";
             };
             updateHero();
             heroInterval = setInterval(() => {
