@@ -735,6 +735,22 @@ body {
   box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
 
+.cast-wrapper {
+  margin: 10px;
+  text-align: center;
+}
+.cast-card {
+  height: 225px;
+  width: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.cast-name {
+  margin-top: 8px;
+  color: #ccc;
+  font-size: 0.9rem;
+}
+
 .modal-buttons {
     display: flex;
     gap: 15px;
@@ -1204,34 +1220,22 @@ body {
   }
 
   .cast-wrapper {
-      margin: 5px;
+      margin: 0;
   }
   .cast-card {
-      height: 150px;
-      width: 100px;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 2 / 3;
   }
   .cast-name {
       font-size: 0.75rem;
       margin-top: 5px;
   }
+  #p-credits-grid {
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 8px;
+  }
 }
-
-.cast-wrapper {
-  margin: 10px;
-  text-align: center;
-}
-.cast-card {
-  height: 225px;
-  width: 150px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-.cast-name {
-  margin-top: 8px;
-  color: #ccc;
-  font-size: 0.9rem;
-}
-
 #api-modal {
   position: fixed;
   inset: 0;
