@@ -982,7 +982,8 @@ body {
       font-size: 1.1rem;
   }
   .hero-content {
-      padding-top: 120px;
+      padding-top: 100px;
+      padding-bottom: 40px;
       margin-left: 20px;
       margin-right: 20px;
       padding-left: 0;
@@ -1051,15 +1052,26 @@ body {
   
   .hero-buttons {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+      width: 100%;
+  }
+  .hero-buttons::-webkit-scrollbar {
+      display: none;
   }
   .hero-buttons .btn {
-      flex: 1 0 auto;
-      margin-right: 0;
-      margin-bottom: 0;
+      height: 35px;
+      font-size: 0.75rem;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
       justify-content: center;
-      min-width: 120px; 
+      margin: 0;
+      white-space: nowrap;
+      flex: 1 1 auto;
+      min-width: 0;
   }
   
   .modal-buttons {
@@ -1090,14 +1102,17 @@ body {
   }
   
   @media (max-width: 480px) {
-      .modal-buttons .btn .btn-text {
+      .modal-buttons .btn .btn-text,
+      .hero-buttons .btn .btn-text {
           display: none;
       }
-      .modal-buttons .btn i {
+      .modal-buttons .btn i,
+      .hero-buttons .btn i {
           margin-right: 0 !important;
           font-size: 1rem;
       }
-      .modal-buttons .btn {
+      .modal-buttons .btn,
+      .hero-buttons .btn {
           padding: 0 12px;
           min-width: 45px;
       }
