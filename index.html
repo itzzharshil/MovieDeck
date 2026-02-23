@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>MovieDeck - Premium Streaming Experience</title>
     <meta name="description" content="MovieDeck is a premium, glassmorphism-styled movie and TV show explorer. Discover trending content, watch trailers, and track your favorites." />
     <meta name="keywords" content="movies, tv shows, streaming, glassmorphism, entertainment, film, series, tmdb" />
@@ -175,24 +175,24 @@
             <h2 class="modal-title" id="m-title">Title</h2>
             <div class="modal-buttons">
               <button class="btn btn-white" onclick="playMedia(currentModalItem)">
-                <i class="fas fa-play"></i> Play
+                <i class="fas fa-play"></i> <span class="btn-text">Play</span>
               </button>
               <button class="btn btn-grey" onclick="playTrailer(currentModalItem)">
-                <i class="fas fa-film"></i> Trailer
+                <i class="fas fa-film"></i> <span class="btn-text">Trailer</span>
               </button>
               <button class="btn btn-grey" onclick="addToWishlistModal()">
-                <i class="fas fa-plus"></i> My List
+                <i class="fas fa-plus"></i> <span class="btn-text">My List</span>
               </button>
               <button class="btn btn-grey" onclick="showCast(currentModalItem)">
-                <i class="fas fa-users"></i> Cast
+                <i class="fas fa-users"></i> <span class="btn-text">Cast</span>
               </button>
               <button class="btn btn-grey" onclick="shareContent()">
-                <i class="fas fa-share-alt"></i> Share
+                <i class="fas fa-share-alt"></i> <span class="btn-text">Share</span>
               </button>
             </div>
           </div>
         </div>
-        <div style="padding: 30px 50px;">
+        <div class="modal-info-container">
           <div>
             <div class="meta-line">
               <span style="color: #46d369" id="m-match">98% Match</span>
@@ -200,15 +200,7 @@
               <span class="badge-imdb" id="m-imdb">IMDb 8.5</span>
               <span id="m-genres" style="color: #bbb; margin-left: 15px;">Loading...</span>
             </div>
-            <p
-              id="m-desc"
-              style="
-                line-height: 1.6;
-                margin-bottom: 30px;
-                color: #ddd;
-                font-size: 1.1rem;
-              "
-            ></p>
+            <p id="m-desc" class="modal-desc"></p>
           </div>
         </div>
         
@@ -217,7 +209,7 @@
             <div class="modal-tab" onclick="switchModalTab('reviews')">Reviews</div>
         </div>
 
-        <div id="reviews-section" style="padding: 0 50px 30px 50px; display: none;">
+        <div id="reviews-section" class="reviews-section" style="display: none;">
             <div id="reviews-list"></div>
         </div>
 

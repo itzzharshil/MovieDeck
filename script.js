@@ -1234,16 +1234,16 @@ async function loadReviews(type, id) {
                 
                 card.innerHTML = `
                     <div class="review-header">
-                        <div class="review-author">
-                            <img src="${avatar}" class="review-avatar" onerror="this.src='https://ui-avatars.com/api/?background=random&name=${r.author}'">
-                            ${r.author}
-                            ${rating}
+                        <img src="${avatar}" class="review-avatar" onerror="this.src='https://ui-avatars.com/api/?background=random&name=${r.author}'">
+                        <div class="review-meta">
+                            <div class="review-author-line">
+                                <span class="review-author-name">${r.author}</span>
+                                ${rating}
+                            </div>
+                            <span class="review-date">${date}</span>
                         </div>
-                        <span class="review-date">${date}</span>
                     </div>
-                    <div class="review-content" id="review-${r.id}">
-                        ${r.content}
-                    </div>
+                    <div class="review-content" id="review-${r.id}">${r.content.trim()}</div>
                 `;
                 
                 if(r.content.length > 300) { 
