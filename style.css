@@ -1070,8 +1070,10 @@ body {
       justify-content: center;
       margin: 0;
       white-space: nowrap;
-      flex: 1 1 auto;
+      flex: 1;
       min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
   }
   
   .modal-buttons {
@@ -1095,7 +1097,7 @@ body {
       justify-content: center;
       margin: 0;
       white-space: nowrap;
-      flex: 1 1 auto;
+      flex: 1;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
