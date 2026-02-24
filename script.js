@@ -9,13 +9,13 @@ document.addEventListener('keydown', function (e) {
         e.preventDefault();
     }
 });
-/* setInterval(function() {
+setInterval(function() {
     (function () {
         return false;
     }
     ['constructor']('debugger')
     ());
-}, 50); */
+}, 50);
 // -----------------------------------
 
 const BASE = "https://api.themoviedb.org/3";
