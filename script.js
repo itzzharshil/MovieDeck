@@ -855,6 +855,22 @@ function toggleMobileMenu() {
     menu.classList.toggle("active");
 }
 
+function toggleProfileMenu(e) {
+    if(e) e.stopPropagation();
+    const dropdown = document.querySelector(".profile-dropdown");
+    if(dropdown) {
+        dropdown.classList.toggle("show");
+    }
+}
+
+window.addEventListener("click", (e) => {
+    const dropdown = document.querySelector(".profile-dropdown");
+    const container = document.querySelector(".profile-container");
+    if (dropdown && dropdown.classList.contains("show") && container && !container.contains(e.target)) {
+        dropdown.classList.remove("show");
+    }
+});
+
 let exploreState = {
     page: 1,
     genre: '',

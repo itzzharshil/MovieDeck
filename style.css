@@ -220,9 +220,13 @@ body {
     height: 20px;
     background: transparent;
 }
-.profile-container:hover .profile-dropdown,
+@media (hover: hover) {
+  .profile-container:hover .profile-dropdown {
+    display: flex;
+  }
+}
 .profile-dropdown.show {
-  display: flex;
+  display: flex !important;
 }
 
 .profile-dropdown a {
