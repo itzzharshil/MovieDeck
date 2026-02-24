@@ -934,388 +934,6 @@ body {
     z-index: 5;
 }
 
-@media (max-width: 1024px) {
-  .modal-buttons {
-      flex-wrap: nowrap;
-      gap: 8px;
-  }
-  .modal-buttons .btn {
-      height: 40px;
-      padding: 0 10px;
-      font-size: 0.85rem;
-      white-space: nowrap;
-  }
-}
-
-@media (max-width: 768px) {
-  .navbar {
-      width: 100%;
-      top: 0;
-      left: 0;
-      transform: none;
-      border-radius: 0;
-      border: none;
-      padding: 0 15px; 
-  }
-  
-  .logo {
-      font-size: 1.4rem;
-  }
-  
-  .nav-right {
-      gap: 15px;
-  }
-  
-  .nav-icon {
-      font-size: 1.1rem;
-  }
-  
-  .search-input.active {
-      width: 150px;
-  }
-  .logo {
-      font-size: 1.4rem;
-  }
-  .nav-right {
-      gap: 15px;
-  }
-  .nav-icon {
-      font-size: 1.1rem;
-  }
-  .hero-content {
-      padding-top: 100px;
-      padding-bottom: 80px;
-      margin-left: 20px;
-      margin-right: 20px;
-      padding-left: 0;
-  }
-  .hero-title {
-    font-size: 2.5rem;
-    line-height: 1.1;
-    min-height: 110px;
-    margin-bottom: 15px;
-  }
-  .hero-logo {
-    max-width: 300px;
-    max-height: 100px;
-    margin-bottom: 0;
-  }
-  .hero-desc {
-      font-size: 0.95rem;
-      -webkit-line-clamp: 3;
-      line-clamp: 3;
-      margin-bottom: 20px;
-      height: 73px;
-  }
-  .btn {
-      padding: 0.7rem 1.5rem;
-      font-size: 0.9rem;
-      margin-bottom: 10px;
-  }
-  .modal-card {
-    width: 100%;
-    margin: 0;
-    border-radius: 0;
-    height: 100dvh;
-    max-height: 100dvh;
-  }
-  .modal-hero {
-    height: 250px;
-  }
-  .modal-title {
-      font-size: 2rem;
-  }
-  .modal-content-layer {
-      left: 20px;
-      width: calc(100% - 40px);
-  }
-  .modal-grid {
-      padding: 0 20px 30px 20px;
-  }
-  .nav-links {
-    display: none; 
-  }
-  .menu-toggle {
-    display: block;
-    margin-left: 5px;
-  }
-  .row-posters {
-      padding: 20px 20px;
-      gap: 10px;
-  }
-  .poster-card {
-      width: 105px;
-      height: 157px;
-  }
-  .episode-row {
-      padding: 10px;
-  }
-  .ep-index {
-      width: 30px;
-      font-size: 1rem;
-      margin-right: 5px;
-  }
-  .ep-thumb-container {
-      width: 110px;
-      height: 62px;
-      margin: 0 10px 0 0;
-  }
-  .ep-text {
-      min-width: 0;
-  }
-  .ep-title {
-      font-size: 0.9rem;
-      margin-bottom: 2px;
-  }
-  .ep-desc {
-      font-size: 0.75rem;
-      -webkit-line-clamp: 2;
-      line-clamp: 2;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-  }
-  .category-row h2 {
-      margin-left: 20px;
-      font-size: 1.2rem;
-  }
-  #main-content .category-row:first-child {
-      margin-top: 0;
-  }
-  
-  .hero-buttons {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 5px;
-      width: 100%;
-  }
-  .hero-buttons::-webkit-scrollbar {
-      display: none;
-  }
-  .hero-buttons .btn {
-      height: 35px;
-      font-size: 0.75rem;
-      padding: 0 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0;
-      white-space: nowrap;
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-  }
-  
-  .modal-buttons {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 4px;
-      width: 100%;
-      overflow-x: auto;
-      padding-bottom: 5px;
-  }
-  .modal-buttons::-webkit-scrollbar {
-      display: none;
-  }
-
-  .modal-buttons .btn {
-      height: 35px; 
-      font-size: 0.65rem;
-      padding: 0 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0;
-      white-space: nowrap;
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-  }
-  
-  @media (max-width: 480px) {
-      .navbar {
-          padding: 0 8px;
-      }
-      .logo {
-          font-size: 1.1rem;
-      }
-      .nav-right {
-          gap: 16px;
-      }
-      .nav-icon {
-          font-size: 1rem;
-      }
-      .menu-toggle {
-          font-size: 0.9rem;
-          margin-left: 0;
-      }
-      .modal-buttons .btn .btn-text,
-      .hero-buttons .btn .btn-text {
-          display: none;
-      }
-      .modal-buttons .btn i,
-      .hero-buttons .btn i {
-          margin-right: 0 !important;
-          font-size: 1rem;
-      }
-      .modal-buttons .btn,
-      .hero-buttons .btn {
-          padding: 0 12px;
-          min-width: 45px;
-      }
-  }
-  
-  /* Reset icon-only specific widths */
-  .modal-buttons .btn-icon-only {
-      padding: 0 8px;
-      width: auto !important;
-      flex: 0 0 auto;
-      border-radius: 50px;
-  }
-  
-  .more-like-this-container {
-      padding: 15px;
-  }
-  .recommendation-grid {
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 10px;
-  }
-  .rec-card {
-      height: auto; 
-      aspect-ratio: 2 / 3;
-      width: 100%;
-  }
-  
-  .modal-hero {
-      height: 45vh;
-      min-height: 250px;
-  }
-  .modal-title {
-      font-size: 1.25rem;
-      margin-bottom: 8px;
-  }
-  .modal-content-layer {
-      width: calc(100% - 30px);
-      left: 15px;
-      padding-bottom: 15px;
-  }
-  .meta-line {
-      font-size: 0.8rem;
-      margin-bottom: 15px;
-      gap: 10px;
-  }
-  .badge-imdb {
-      font-size: 0.75rem;
-      padding: 2px 6px;
-  }
-  
-  .modal-info-container {
-      padding: 20px 15px;
-  }
-  .modal-desc {
-      font-size: 0.8rem;
-      line-height: 1.4;
-      margin-bottom: 20px;
-  }
-  .reviews-section {
-      padding: 0 15px 20px 15px;
-  }
-  
-  #tv-section {
-      padding: 0 15px 20px 15px;
-  }
-  
-  .more-like-this-container {
-      padding: 20px 15px 30px 15px;
-  }
-  
-  .review-card {
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 12px;
-  }
-  
-  .review-header {
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 15px;
-  }
-  
-  .review-avatar {
-      width: 40px;
-      height: 40px;
-  }
-  
-  .review-author-name {
-      font-size: 0.9rem;
-  }
-  
-  .review-rating {
-      font-size: 0.75rem;
-      padding: 2px 8px;
-  }
-  
-  .review-date {
-      font-size: 0.75rem;
-  }
-  
-  .review-content {
-      font-size: 0.85rem;
-      line-height: 1.6;
-  }
-  
-  .modal-tabs {
-      padding: 0 15px;
-      gap: 15px;
-      margin: 0;
-      margin-bottom: 15px;
-      justify-content: flex-start;
-  }
-  .modal-tab {
-      font-size: 0.95rem;
-      padding-bottom: 5px;
-  }
-  
-  .adblock-card {
-      padding: 15px;
-      max-width: 280px;
-      gap: 10px;
-  }
-  .adblock-icon-large {
-      width: 45px;
-      height: 45px;
-      min-width: 45px;
-      font-size: 1.4rem;
-  }
-  .adblock-text h3 {
-      font-size: 1rem;
-      margin-bottom: 5px;
-  }
-  .adblock-text p {
-      font-size: 0.8rem;
-  }
-
-  .cast-wrapper {
-      margin: 0;
-  }
-  .cast-card {
-      width: 100%;
-      height: auto;
-      aspect-ratio: 2 / 3;
-  }
-  .cast-name {
-      font-size: 0.75rem;
-      margin-top: 5px;
-  }
-  #p-credits-grid {
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: 8px;
-  }
-}
 #api-modal {
   position: fixed;
   inset: 0;
@@ -1926,4 +1544,386 @@ body {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
     visibility: visible;
+}
+@media (max-width: 1024px) {
+  .modal-buttons {
+      flex-wrap: nowrap;
+      gap: 8px;
+  }
+  .modal-buttons .btn {
+      height: 40px;
+      padding: 0 10px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+      width: 100%;
+      top: 0;
+      left: 0;
+      transform: none;
+      border-radius: 0;
+      border: none;
+      padding: 0 15px; 
+  }
+  
+  .logo {
+      font-size: 1.4rem;
+  }
+  
+  .nav-right {
+      gap: 15px;
+  }
+  
+  .nav-icon {
+      font-size: 1.1rem;
+  }
+  
+  .search-input.active {
+      width: 150px;
+  }
+  .logo {
+      font-size: 1.4rem;
+  }
+  .nav-right {
+      gap: 15px;
+  }
+  .nav-icon {
+      font-size: 1.1rem;
+  }
+  .hero-content {
+      padding-top: 100px;
+      padding-bottom: 80px;
+      margin-left: 20px;
+      margin-right: 20px;
+      padding-left: 0;
+  }
+  .hero-title {
+    font-size: 2.5rem;
+    line-height: 1.1;
+    min-height: 110px;
+    margin-bottom: 15px;
+  }
+  .hero-logo {
+    max-width: 300px;
+    max-height: 100px;
+    margin-bottom: 0;
+  }
+  .hero-desc {
+      font-size: 0.95rem;
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+      margin-bottom: 20px;
+      height: 73px;
+  }
+  .btn {
+      padding: 0.7rem 1.5rem;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+  }
+  .modal-card {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+  .modal-hero {
+    height: 250px;
+  }
+  .modal-title {
+      font-size: 2rem;
+  }
+  .modal-content-layer {
+      left: 20px;
+      width: calc(100% - 40px);
+  }
+  .modal-grid {
+      padding: 0 20px 30px 20px;
+  }
+  .nav-links {
+    display: none; 
+  }
+  .menu-toggle {
+    display: block;
+    margin-left: 5px;
+  }
+  .row-posters {
+      padding: 20px 20px;
+      gap: 10px;
+  }
+  .poster-card {
+      width: 105px;
+      height: 157px;
+  }
+  .episode-row {
+      padding: 10px;
+  }
+  .ep-index {
+      width: 30px;
+      font-size: 1rem;
+      margin-right: 5px;
+  }
+  .ep-thumb-container {
+      width: 110px;
+      height: 62px;
+      margin: 0 10px 0 0;
+  }
+  .ep-text {
+      min-width: 0;
+  }
+  .ep-title {
+      font-size: 0.9rem;
+      margin-bottom: 2px;
+  }
+  .ep-desc {
+      font-size: 0.75rem;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+  }
+  .category-row h2 {
+      margin-left: 20px;
+      font-size: 1.2rem;
+  }
+  #main-content .category-row:first-child {
+      margin-top: 0;
+  }
+  
+  .hero-buttons {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+      width: 100%;
+  }
+  .hero-buttons::-webkit-scrollbar {
+      display: none;
+  }
+  .hero-buttons .btn {
+      height: 35px;
+      font-size: 0.75rem;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+  }
+  
+  .modal-buttons {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 4px;
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 5px;
+  }
+  .modal-buttons::-webkit-scrollbar {
+      display: none;
+  }
+
+  .modal-buttons .btn {
+      height: 35px; 
+      font-size: 0.65rem;
+      padding: 0 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+  }
+  
+  @media (max-width: 480px) {
+      .navbar {
+          padding: 0 8px;
+      }
+      .logo {
+          font-size: 1.1rem;
+      }
+      .nav-right {
+          gap: 16px;
+      }
+      .nav-icon {
+          font-size: 1rem;
+      }
+      .menu-toggle {
+          font-size: 0.9rem;
+          margin-left: 0;
+      }
+      .modal-buttons .btn .btn-text,
+      .hero-buttons .btn .btn-text {
+          display: none;
+      }
+      .modal-buttons .btn i,
+      .hero-buttons .btn i {
+          margin-right: 0 !important;
+          font-size: 1rem;
+      }
+      .modal-buttons .btn,
+      .hero-buttons .btn {
+          padding: 0 12px;
+          min-width: 45px;
+      }
+  }
+  
+  /* Reset icon-only specific widths */
+  .modal-buttons .btn-icon-only {
+      padding: 0 8px;
+      width: auto !important;
+      flex: 0 0 auto;
+      border-radius: 50px;
+  }
+  
+  .more-like-this-container {
+      padding: 15px;
+  }
+  .recommendation-grid {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+  }
+  .rec-card {
+      height: auto; 
+      aspect-ratio: 2 / 3;
+      width: 100%;
+  }
+  
+  .modal-hero {
+      height: 45vh;
+      min-height: 250px;
+  }
+  .modal-title {
+      font-size: 1.25rem;
+      margin-bottom: 8px;
+  }
+  .modal-content-layer {
+      width: calc(100% - 30px);
+      left: 15px;
+      padding-bottom: 15px;
+  }
+  .meta-line {
+      font-size: 0.8rem;
+      margin-bottom: 15px;
+      gap: 10px;
+  }
+  .badge-imdb {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+  }
+  
+  .modal-info-container {
+      padding: 20px 15px;
+  }
+  .modal-desc {
+      font-size: 0.8rem;
+      line-height: 1.4;
+      margin-bottom: 20px;
+  }
+  .reviews-section {
+      padding: 0 15px 20px 15px;
+  }
+  
+  #tv-section {
+      padding: 0 15px 20px 15px;
+  }
+  
+  .more-like-this-container {
+      padding: 20px 15px 30px 15px;
+  }
+  
+  .review-card {
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 12px;
+  }
+  
+  .review-header {
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+  }
+  
+  .review-avatar {
+      width: 40px;
+      height: 40px;
+  }
+  
+  .review-author-name {
+      font-size: 0.9rem;
+  }
+  
+  .review-rating {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+  }
+  
+  .review-date {
+      font-size: 0.75rem;
+  }
+  
+  .review-content {
+      font-size: 0.85rem;
+      line-height: 1.6;
+  }
+  
+  .modal-tabs {
+      padding: 0 15px;
+      gap: 15px;
+      margin: 0;
+      margin-bottom: 15px;
+      justify-content: flex-start;
+  }
+  .modal-tab {
+      font-size: 0.95rem;
+      padding-bottom: 5px;
+  }
+  
+  .adblock-card {
+      padding: 15px;
+      max-width: 280px;
+      gap: 10px;
+  }
+  .adblock-icon-large {
+      width: 45px;
+      height: 45px;
+      min-width: 45px;
+      font-size: 1.4rem;
+  }
+  .adblock-text h3 {
+      font-size: 1rem;
+      margin-bottom: 5px;
+  }
+  .adblock-text p {
+      font-size: 0.8rem;
+  }
+
+  .cast-wrapper {
+      margin: 0;
+  }
+  .cast-card {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 2 / 3;
+  }
+  .cast-name {
+      font-size: 0.75rem;
+      margin-top: 5px;
+  }
+  #p-credits-grid {
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 8px;
+  }
 }
