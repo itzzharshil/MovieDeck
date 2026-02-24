@@ -702,7 +702,6 @@ body {
 
 .more-like-this-container {
   padding: 30px 50px 50px 50px;
-  padding: 30px 50px 50px 50px;
 }
 .recommendation-grid {
   display: grid;
@@ -1061,6 +1060,9 @@ body {
       height: 62px;
       margin: 0 10px 0 0;
   }
+  .ep-text {
+      min-width: 0;
+  }
   .ep-title {
       font-size: 0.9rem;
       margin-bottom: 2px;
@@ -1221,6 +1223,14 @@ body {
   }
   .reviews-section {
       padding: 0 15px 20px 15px;
+  }
+  
+  #tv-section {
+      padding: 0 15px 20px 15px;
+  }
+  
+  .more-like-this-container {
+      padding: 20px 15px 30px 15px;
   }
   
   .review-card {
