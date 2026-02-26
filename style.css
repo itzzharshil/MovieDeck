@@ -220,7 +220,11 @@ body {
     height: 20px;
     background: transparent;
 }
-.profile-container:hover .profile-dropdown,
+@media (hover: hover) {
+  .profile-container:hover .profile-dropdown {
+    display: flex;
+  }
+}
 .profile-dropdown.show {
   display: flex;
 }
@@ -966,13 +970,42 @@ body {
     gap: 20px;
 }
 .logo-loader {
-    font-size: 2.5rem;
-    font-weight: 800;
-    background: linear-gradient(45deg, var(--primary), var(--secondary));
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 900;
+    background: linear-gradient(
+        45deg,
+        var(--primary) 0%,
+        var(--secondary) 25%,
+        #ffffff 50%,
+        var(--secondary) 75%,
+        var(--primary) 100%
+    );
+    background-size: 300% auto;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    letter-spacing: 2px;
+    letter-spacing: 4px;
+    animation: cinematicPulse 2.5s ease-in-out infinite;
+    text-shadow: 0 0 20px rgba(0, 242, 255, 0.1);
+}
+
+@keyframes cinematicPulse {
+    0% {
+        background-position: 0% 50%;
+        transform: scale(0.95);
+        opacity: 0.7;
+    }
+    50% {
+        background-position: 100% 50%;
+        transform: scale(1.05);
+        opacity: 1;
+        text-shadow: 0 0 50px rgba(189, 0, 255, 0.6);
+    }
+    100% {
+        background-position: 0% 50%;
+        transform: scale(0.95);
+        opacity: 0.7;
+    }
 }
 
 .loader-container {
@@ -1926,4 +1959,75 @@ body {
       grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
       gap: 8px;
   }
+}
+/* Smooth Scaling for Regular Horizontal Rows */
+@media (max-width: 768px) {
+    .poster-card {
+        width: 130px !important;
+        height: 195px !important;
+    }
+    .recommendation-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+        gap: 12px !important;
+    }
+    .video-close-btn {
+        top: 10px !important;
+        right: auto !important;
+        left: 10px !important;
+        width: 40px !important;
+        height: 40px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .poster-card {
+        width: 105px !important;
+        height: 157px !important;
+    }
+    .recommendation-grid {
+        grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)) !important;
+        gap: 10px !important;
+    }
+    .row-posters {
+        padding: 20px 15px !important; 
+    }
+    .category-row h2 {
+       margin-left: 15px !important;
+    }
+}
+
+/* Fluid CSS Grid for Wrap Containers (Explore, Search, Watchlist) */
+.row-posters[style*="wrap"] {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+    gap: 15px !important;
+    padding: 20px 40px !important;
+    margin-top: 0 !important;
+}
+
+.row-posters[style*="wrap"] .poster-wrapper {
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+.row-posters[style*="wrap"] .poster-card {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 2 / 3 !important;
+}
+
+@media (max-width: 768px) {
+    .row-posters[style*="wrap"] {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+        gap: 12px !important;
+        padding: 20px 25px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .row-posters[style*="wrap"] {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+        gap: 10px !important;
+        padding: 20px 15px !important;
+    }
 }

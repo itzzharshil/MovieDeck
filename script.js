@@ -1338,7 +1338,7 @@ window.addEventListener("load", async () => {
             try {
                 const res = await fetch(`${BASE}/${type}/${id}?api_key=${KEY}`);
                 const data = await res.json();
-                if(data && !data.success === false) {
+                if(data && data.success !== false) {
                    data.media_type = type;
                    openModal(data);
                 }
@@ -1408,3 +1408,12 @@ function closeTextModal(e) {
         document.body.style.overflow = "auto";
     }
 }
+
+window.addEventListener('click', (e) => {
+    const dropdown = document.querySelector('.profile-dropdown');
+    if (e.target.closest('.profile-icon')) {
+        dropdown.classList.toggle('show');
+    } else if (!e.target.closest('.profile-dropdown')) {
+        dropdown.classList.remove('show');
+    }
+});
