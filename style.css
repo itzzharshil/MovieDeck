@@ -1185,7 +1185,9 @@ body {
 
 .filter-container {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     gap: 15px;
     padding: 20px 40px; 
     margin-top: 20px;
@@ -1193,6 +1195,9 @@ body {
     z-index: 30;
     position: relative;
     align-items: center;
+}
+.filter-container::-webkit-scrollbar {
+    display: none;
 }
 
 .filter-select {
@@ -1207,6 +1212,7 @@ body {
     transition: all 0.3s ease;
     outline: none;
     font-family: inherit;
+    flex-shrink: 0;
 }
 
 .filter-select:hover, .filter-select:focus {
@@ -2022,6 +2028,11 @@ body {
         gap: 12px !important;
         padding: 20px 25px !important;
     }
+    .filter-container {
+        padding: 10px 25px !important;
+        margin-top: 10px !important;
+        margin-bottom: 10px !important;
+    }
 }
 
 @media (max-width: 480px) {
@@ -2029,5 +2040,18 @@ body {
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
         gap: 10px !important;
         padding: 20px 15px !important;
+    }
+    .filter-container {
+        padding: 5px 15px !important;
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
+        gap: 8px !important;
+    }
+    .filter-select {
+        flex: 1;
+        padding: 8px 5px !important;
+        font-size: 0.85rem !important;
+        text-align: center;
+        min-width: 0; /* allows flex items to shrink below their content size if needed */
     }
 }
