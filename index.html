@@ -9,6 +9,20 @@
   gtag('js', new Date());
 
   gtag('config', 'G-SM7BDJXH5H');
+
+  // Force clear old service workers and caches causing the ghost buffering circle
+  if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+              registration.unregister();
+          }
+      });
+  }
+  if ('caches' in window) {
+      caches.keys().then(function(names) {
+          for (let name of names) caches.delete(name);
+      });
+  }
 </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -72,6 +86,7 @@
             <div class="adblock-text">
                 <h3>AdBlocker Recommended</h3>
                 <p>For the best cinematic experience, we highly recommend enabling an <b>AdBlocker</b>.</p>
+                <p style="font-size: 0.9rem; margin-top: 10px; color: #ccc;">Don't have one? Get <a href="https://adguard.com/" target="_blank" rel="noopener noreferrer" style="color: #46d369; text-decoration: none; font-weight: bold;">AdGuard</a> or search for an ad blocker in your browser's extension store.</p>
             </div>
             <button class="btn-adblock-close" onclick="closeAdblockMsg()"><i class="fas fa-times"></i></button>
         </div>

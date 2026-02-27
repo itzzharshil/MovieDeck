@@ -297,6 +297,9 @@ let gridState = {
 };
 
 async function loadGrid(title, endpoint, type) {
+    const loader = document.getElementById("global-loader");
+    if(loader) loader.classList.remove("hidden");
+
     gridState = {
         active: true,
         page: 1,
@@ -323,6 +326,10 @@ async function loadGrid(title, endpoint, type) {
     `;
     
     await loadMoreGrid();
+
+    setTimeout(() => {
+        if(loader) loader.classList.add("hidden");
+    }, 100);
 }
 
 async function loadMoreGrid() {
@@ -946,6 +953,9 @@ function updateGenreOptions() {
 }
 
 async function applyFilters() {
+    const loader = document.getElementById("global-loader");
+    if(loader) loader.classList.remove("hidden");
+
     exploreState.page = 1;
     exploreState.type = document.getElementById("filter-type").value;
     exploreState.genre = document.getElementById("filter-genre").value;
@@ -957,6 +967,10 @@ async function applyFilters() {
         `Explore ${exploreState.type === 'movie' ? 'Movies' : 'TV Series'}`;
         
     await loadMoreExplore();
+
+    setTimeout(() => {
+        if(loader) loader.classList.add("hidden");
+    }, 100);
 }
 
 async function loadMoreExplore() {
