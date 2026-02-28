@@ -1495,24 +1495,23 @@ async function playRandom() {
     if (dice) dice.classList.add('fa-spin');
     
     const overlay = document.getElementById('surprise-overlay');
-    const card = document.getElementById('surprise-card');
-    const cardInner = document.querySelector('.surprise-card-inner');
+    const inner = document.getElementById('surprise-inner');
     const img = document.getElementById('surprise-img');
     const text = document.getElementById('surprise-text');
     
-    // Reset state
-    card.classList.remove('flipping');
-    cardInner.classList.remove('show-winner');
-    
-    // Force DOM Reflow to ensure animation restarts every time
-    void card.offsetWidth;
+    // Reset state & ensure animation restarts
+    img.style.opacity = 0;
+    inner.style.transition = 'none';
+    inner.style.transform = 'rotateY(0deg)';
+    void inner.offsetWidth; // Force Reflow
     
     img.src = "";
     text.innerText = "Rolling the dice...";
     overlay.classList.add('show');
     
-    // Start animation immediately
-    card.classList.add('flipping');
+    // Start super-fast spin that slows to zero gracefully at 3600 (10 spins -> front face)
+    inner.style.transition = 'transform 3.5s cubic-bezier(0.1, 0.9, 0.2, 1)';
+    inner.style.transform = 'rotateY(3600deg)';
     
     try {
         // Randomly choose between a Movie or TV Show
@@ -1536,10 +1535,15 @@ async function playRandom() {
                 
             img.src = posterSrc;
             
-            // Wait for the CSS spin animation to finish (3s) before showing winner
+            // Wait for the fast spin to completely stop on the front Question Mark face (3.5s)
             setTimeout(() => {
-                cardInner.classList.add('show-winner');
+                // Pre-fade the image smoothly right as the back flip starts
+                img.style.opacity = 1;
                 text.innerText = "You're watching:";
+                
+                // Do a final dramatic, slow 180 degree flip (3600 + 180 = 3780) to reveal the back
+                inner.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                inner.style.transform = 'rotateY(3780deg)';
                 
                 // Trigger fireworks confetti
                 if (window.confetti) {
@@ -1557,7 +1561,7 @@ async function playRandom() {
                     openModal(randomMovie, type);
                 }, 3000);
                 
-            }, 3000);
+            }, 3500);
 
         } else {
             overlay.classList.remove('show');
