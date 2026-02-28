@@ -1999,7 +1999,7 @@ body {
     }
     .recommendation-grid {
         display: grid !important;
-        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+        grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)) !important;
         gap: 10px !important;
     }
     .recommendation-grid .poster-card {
