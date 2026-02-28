@@ -1515,14 +1515,19 @@ async function playRandom() {
     card.classList.add('flipping');
     
     try {
-        const randomPage = Math.floor(Math.random() * 100) + 1;
-        const url = `${BASE}/movie/top_rated?api_key=${KEY}&page=${randomPage}`;
+        // Randomly choose between a Movie or TV Show
+        const isMovie = Math.random() > 0.5;
+        const type = isMovie ? 'movie' : 'tv';
+        
+        // Fetch from 20 pages of highly rated content (8.0+ rating, min 300 votes)
+        const randomPage = Math.floor(Math.random() * 20) + 1;
+        const url = `${BASE}/discover/${type}?api_key=${KEY}&vote_average.gte=8.0&vote_count.gte=300&page=${randomPage}&sort_by=popularity.desc`;
         const res = await fetch(url);
         const data = await res.json();
         
         if (data.results && data.results.length > 0) {
             const randomMovie = data.results[Math.floor(Math.random() * data.results.length)];
-            randomMovie.media_type = 'movie';
+            randomMovie.media_type = type;
             
             // Preload the image so it doesn't pop in blank
             const posterSrc = randomMovie.poster_path 
@@ -1531,7 +1536,7 @@ async function playRandom() {
                 
             img.src = posterSrc;
             
-            // Wait for the CSS spin animation to near completion (2.5s)
+            // Wait for the CSS spin animation to finish (3s) before showing winner
             setTimeout(() => {
                 cardInner.classList.add('show-winner');
                 text.innerText = "You're watching:";
@@ -1549,10 +1554,10 @@ async function playRandom() {
                 // Show the movie result for 3 seconds, then open the real modal
                 setTimeout(() => {
                     overlay.classList.remove('show');
-                    openModal(randomMovie, 'movie');
+                    openModal(randomMovie, type);
                 }, 3000);
                 
-            }, 2500);
+            }, 3000);
 
         } else {
             overlay.classList.remove('show');
