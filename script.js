@@ -1506,7 +1506,7 @@ async function playRandom() {
     void inner.offsetWidth; // Force Reflow
     
     img.src = "";
-    text.innerText = "Rolling the dice...";
+    text.innerText = "Get Ready!";
     overlay.classList.add('show');
     
     // Start super-fast spin that slows to zero gracefully at 3600 (10 spins -> front face)
