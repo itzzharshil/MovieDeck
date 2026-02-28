@@ -123,9 +123,11 @@
             placeholder="Titles, people, genres..."
           />
         </div>
-        <div class="notify-box">
-          <i class="fas fa-bell nav-icon"></i><span class="badge">3</span>
+        
+        <div class="surprise-box" onclick="playRandom()" title="Surprise Me!">
+          <i class="fas fa-dice nav-icon" style="color: var(--primary);"></i>
         </div>
+
 
         <div class="profile-container">
           <div class="profile-icon">
@@ -134,6 +136,14 @@
           <div class="profile-dropdown">
             <a href="#" onclick="clearHistory()"><i class="fas fa-history" style="margin-right: 10px; width: 20px; text-align: center;"></i> Clear History</a>
             <a href="#" onclick="clearWishlist()"><i class="fas fa-trash" style="margin-right: 10px; width: 20px; text-align: center;"></i> Clear Watchlist</a>
+            <div class="dropdown-divider"></div>
+            <div style="padding: 10px 20px; color: #a0a0a0; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Theme Color</div>
+            <div class="theme-options" style="display: flex; gap: 10px; padding: 0 20px 10px 20px;">
+                <div class="theme-dot" style="background: linear-gradient(135deg, #00f2ff, #bd00ff); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 10px #00f2ff;" onclick="setTheme('default', this)" title="Neon Cyan (Default)"></div>
+                <div class="theme-dot" style="background: linear-gradient(135deg, #e50914, #b20710); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="setTheme('netflix', this)" title="Cinematic Red"></div>
+                <div class="theme-dot" style="background: linear-gradient(135deg, #1ce783, #00b05b); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="setTheme('hulu', this)" title="Neon Green"></div>
+                <div class="theme-dot" style="background: linear-gradient(135deg, #ff007f, #7900ff); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="setTheme('cyberpunk', this)" title="Cyberpunk Pink"></div>
+            </div>
             <div class="dropdown-divider"></div>
             <a href="#" onclick="resetApp()" style="color: #ff4757;"><i class="fas fa-sign-out-alt" style="margin-right: 10px; width: 20px; text-align: center;"></i> Sign Out</a>
           </div>
@@ -356,6 +366,24 @@
         </div>
     </div>
 
+    <!-- Surprise Me Animation Overlay -->
+    <div id="surprise-overlay" class="surprise-overlay">
+        <div class="surprise-container">
+            <div class="surprise-card" id="surprise-card">
+                <div class="surprise-card-inner">
+                    <div class="surprise-card-front">
+                        <i class="fas fa-question" style="font-size: 5rem; color: var(--primary); text-shadow: 0 0 20px var(--primary);"></i>
+                    </div>
+                    <div class="surprise-card-back">
+                        <img id="surprise-img" src="" alt="Surprise Movie">
+                    </div>
+                </div>
+            </div>
+            <h2 id="surprise-text" class="surprise-text">Rolling the dice...</h2>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
     <script src="script.js?v=5" defer></script>
   </body>
 </html>

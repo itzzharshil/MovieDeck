@@ -1431,3 +1431,139 @@ window.addEventListener('click', (e) => {
         dropdown.classList.remove('show');
     }
 });
+
+// ------ Theme Switcher Logic ------
+const themes = {
+    default: {
+        primary: "#00f2ff",
+        secondary: "#bd00ff",
+        bg: "#050510"
+    },
+    netflix: {
+        primary: "#e50914",
+        secondary: "#b20710",
+        bg: "#0e0e0e"
+    },
+    hulu: {
+        primary: "#1ce783",
+        secondary: "#00b05b",
+        bg: "#000000"
+    },
+    cyberpunk: {
+        primary: "#ff007f",
+        secondary: "#7900ff",
+        bg: "#090911"
+    }
+};
+
+function initTheme() {
+    const saved = localStorage.getItem("app_theme") || "default";
+    applyTheme(saved);
+}
+
+function setTheme(themeName, elTarget) {
+    applyTheme(themeName);
+    localStorage.setItem("app_theme", themeName);
+    
+    // Update active circle UI
+    if (elTarget) {
+        document.querySelectorAll('.theme-dot').forEach(el => {
+            el.style.border = "2px solid transparent";
+            el.style.boxShadow = "none";
+        });
+        elTarget.style.border = "2px solid white";
+        elTarget.style.boxShadow = `0 0 10px ${themes[themeName].primary}`;
+    }
+}
+
+function applyTheme(themeName) {
+    const theme = themes[themeName];
+    if (theme) {
+        document.documentElement.style.setProperty('--primary', theme.primary);
+        document.documentElement.style.setProperty('--secondary', theme.secondary);
+        document.documentElement.style.setProperty('--bg-color', theme.bg);
+    }
+}
+
+// Ensure theme applies on load
+initTheme();
+// ----------------------------------
+
+// ------ Surprise Me Logic ---------
+async function playRandom() {
+    const dice = document.querySelector('.fa-dice');
+    if (dice) dice.classList.add('fa-spin');
+    
+    const overlay = document.getElementById('surprise-overlay');
+    const card = document.getElementById('surprise-card');
+    const cardInner = document.querySelector('.surprise-card-inner');
+    const img = document.getElementById('surprise-img');
+    const text = document.getElementById('surprise-text');
+    
+    // Reset state
+    card.classList.remove('flipping');
+    cardInner.classList.remove('show-winner');
+    
+    // Force DOM Reflow to ensure animation restarts every time
+    void card.offsetWidth;
+    
+    img.src = "";
+    text.innerText = "Rolling the dice...";
+    overlay.classList.add('show');
+    
+    // Start animation immediately
+    card.classList.add('flipping');
+    
+    try {
+        const randomPage = Math.floor(Math.random() * 100) + 1;
+        const url = `${BASE}/movie/top_rated?api_key=${KEY}&page=${randomPage}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.results && data.results.length > 0) {
+            const randomMovie = data.results[Math.floor(Math.random() * data.results.length)];
+            randomMovie.media_type = 'movie';
+            
+            // Preload the image so it doesn't pop in blank
+            const posterSrc = randomMovie.poster_path 
+                ? `${IMG}${randomMovie.poster_path}` 
+                : 'https://via.placeholder.com/300x450?text=MovieDeck';
+                
+            img.src = posterSrc;
+            
+            // Wait for the CSS spin animation to near completion (2.5s)
+            setTimeout(() => {
+                cardInner.classList.add('show-winner');
+                text.innerText = "You're watching:";
+                
+                // Trigger fireworks confetti
+                if (window.confetti) {
+                    confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00f2ff', '#bd00ff', '#ffffff']
+                    });
+                }
+                
+                // Show the movie result for 3 seconds, then open the real modal
+                setTimeout(() => {
+                    overlay.classList.remove('show');
+                    openModal(randomMovie, 'movie');
+                }, 3000);
+                
+            }, 2500);
+
+        } else {
+            overlay.classList.remove('show');
+            alert('Could not discover a random movie. Please try again.');
+        }
+    } catch (e) {
+        console.error("Surprise me error: ", e);
+        overlay.classList.remove('show');
+        alert('Could not discover a random movie. Please check your connection.');
+    } finally {
+        if (dice) dice.classList.remove('fa-spin');
+    }
+}
+// ----------------------------------
