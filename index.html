@@ -86,7 +86,6 @@
             <div class="adblock-text">
                 <h3>AdBlocker Recommended</h3>
                 <p>For the best cinematic experience, we highly recommend enabling an <b>AdBlocker</b>.</p>
-                <!-- <p style="font-size: 0.9rem; margin-top: 10px; color: #ccc;">Don't have one? Get <a href="https://adguard.com/" target="_blank" rel="noopener noreferrer" style="color: #46d369; text-decoration: none; font-weight: bold;">AdGuard</a> or search for an ad blocker in your browser's extension store.</p> -->
             </div>
             <button class="btn-adblock-close" onclick="closeAdblockMsg()"><i class="fas fa-times"></i></button>
         </div>
@@ -143,7 +142,14 @@
                 <div class="theme-dot" style="background: linear-gradient(135deg, #e50914, #b20710); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="setTheme('netflix', this)" title="Cinematic Red"></div>
                 <div class="theme-dot" style="background: linear-gradient(135deg, #1ce783, #00b05b); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="setTheme('hulu', this)" title="Neon Green"></div>
                 <div class="theme-dot" style="background: linear-gradient(135deg, #ff007f, #7900ff); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="setTheme('cyberpunk', this)" title="Cyberpunk Pink"></div>
+                <div class="theme-dot" style="background: linear-gradient(135deg, #ffffff, #888888); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="setTheme('amoled', this)" title="AMOLED Black"></div>
             </div>
+            <div class="dropdown-divider"></div>
+            <div style="padding: 10px 20px; color: #a0a0a0; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Settings</div>
+            <a href="#" onclick="toggleRatings()" style="display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="fas fa-star" style="margin-right: 10px; width: 20px; text-align: center;"></i> Show Ratings</span>
+                <span id="rating-toggle-text" style="color: var(--primary); font-weight: bold; font-size: 0.8rem;"></span>
+            </a>
             <div class="dropdown-divider"></div>
             <a href="#" onclick="resetApp()" style="color: #ff4757;"><i class="fas fa-sign-out-alt" style="margin-right: 10px; width: 20px; text-align: center;"></i> Sign Out</a>
           </div>

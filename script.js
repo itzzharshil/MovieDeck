@@ -283,6 +283,13 @@ function createPosterElement(m, type, className = "poster-card") {
         wrapper.appendChild(badge);
     }
     
+    if (m.vote_average && localStorage.getItem('show_ratings') === 'true' && type !== 'person') {
+        const ratingBadge = document.createElement("div");
+        ratingBadge.className = "poster-rating-badge";
+        ratingBadge.innerHTML = `<i class="fas fa-star" style="color: #f5c518; margin-right: 4px;"></i>${m.vote_average.toFixed(1)}`;
+        wrapper.appendChild(ratingBadge);
+    }
+    
     return wrapper;
 }
 
@@ -1068,7 +1075,7 @@ function goBackToMovie() {
     document.getElementById("modal").style.display = "flex";
 }
 
-async function openPerson(id) {
+async function openPerson(id, from = null) {
     if(!id) return;
     
     document.getElementById("modal").style.display = "none";
@@ -1081,6 +1088,12 @@ async function openPerson(id) {
     
     
     resetPersonModalLayout();
+    
+    if (from === 'cast' && currentModalItem) {
+        const backBtn = document.getElementById("p-back-btn");
+        backBtn.style.display = "flex";
+        backBtn.onclick = () => showCast(currentModalItem);
+    }
     
     document.getElementById("p-img").src = "";
     document.getElementById("p-name").innerText = "Loading...";
@@ -1162,6 +1175,7 @@ async function showCast(item) {
     document.body.style.overflow = "hidden";
     
     document.getElementById("p-back-btn").style.display = "flex";
+    document.getElementById("p-back-btn").onclick = goBackToMovie;
     document.getElementById("p-img-container").style.display = "none"; 
     document.getElementById("p-known-for").style.display = "none"; 
     
@@ -1197,7 +1211,7 @@ async function showCast(item) {
                     img.className = "rec-card cast-card"; 
                     img.onclick = () => {
                          resetPersonModalLayout();
-                         openPerson(c.id);
+                         openPerson(c.id, 'cast');
                     };
                     
                     const name = document.createElement("div");
@@ -1453,6 +1467,11 @@ const themes = {
         primary: "#ff007f",
         secondary: "#7900ff",
         bg: "#090911"
+    },
+    amoled: {
+        primary: "#ffffff",
+        secondary: "#888888",
+        bg: "#000000"
     }
 };
 
@@ -1487,6 +1506,31 @@ function applyTheme(themeName) {
 
 // Ensure theme applies on load
 initTheme();
+initSettings();
+// ----------------------------------
+
+// ------ Settings Switcher Logic ---
+function initSettings() {
+    const show = localStorage.getItem("show_ratings") === "true";
+    const textEl = document.getElementById("rating-toggle-text");
+    if (textEl) {
+        textEl.innerText = show ? "ON" : "OFF";
+    }
+}
+
+function toggleRatings() {
+    let show = localStorage.getItem("show_ratings") === "true";
+    show = !show;
+    localStorage.setItem("show_ratings", show);
+    
+    const textEl = document.getElementById("rating-toggle-text");
+    if (textEl) {
+        textEl.innerText = show ? "ON" : "OFF";
+    }
+    
+    // Refresh to immediately show/hide ratings across app
+    location.reload();
+}
 // ----------------------------------
 
 // ------ Surprise Me Logic ---------

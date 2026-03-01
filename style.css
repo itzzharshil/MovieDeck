@@ -202,6 +202,9 @@ body {
   transition: transform 0.2s;
   box-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
 }
+.profile-container:hover .profile-icon {
+  transform: scale(1.1);
+}
 
 .profile-dropdown {
   position: absolute;
@@ -943,6 +946,26 @@ body {
     font-size: 0.7rem;
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     z-index: 5;
+}
+.poster-rating-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 5;
+    pointer-events: none;
+}
+.list-badge + .poster-rating-badge {
+    top: 35px;
 }
 
 #api-modal {
@@ -1983,12 +2006,36 @@ body {
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
         gap: 12px !important;
     }
+    .recommendation-grid .poster-card,
+    .recommendation-grid .rec-card {
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 2 / 3 !important;
+    }
     .video-close-btn {
         top: 10px !important;
         right: auto !important;
         left: 10px !important;
         width: 40px !important;
         height: 40px !important;
+    }
+    
+    .person-content {
+        padding: 30px !important;
+    }
+    #p-img-container {
+        flex: 0 0 160px !important;
+        margin: 0 auto;
+    }
+    .person-content > div > div:nth-child(2) {
+        min-width: 100% !important;
+        text-align: center;
+    }
+    #p-name {
+        font-size: 2rem !important;
+    }
+    #p-meta {
+        justify-content: center !important;
     }
 }
 
@@ -2002,7 +2049,8 @@ body {
         grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)) !important;
         gap: 10px !important;
     }
-    .recommendation-grid .poster-card {
+    .recommendation-grid .poster-card,
+    .recommendation-grid .rec-card {
         width: 100% !important;
         height: auto !important;
         aspect-ratio: 2 / 3 !important;
@@ -2012,6 +2060,25 @@ body {
     }
     .category-row h2 {
        margin-left: 15px !important;
+    }
+    
+    .person-content {
+        padding: 20px !important;
+    }
+    #p-img-container {
+        flex: 0 0 130px !important;
+        margin: 0 auto;
+    }
+    #p-name {
+        font-size: 1.5rem !important;
+        margin-bottom: 10px !important;
+    }
+    #p-bio {
+        font-size: 0.9rem !important;
+    }
+    #p-meta {
+        font-size: 0.9rem !important;
+        gap: 10px !important;
     }
 }
 
