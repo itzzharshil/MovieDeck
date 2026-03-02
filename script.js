@@ -607,6 +607,21 @@ async function openModal(m, forcedType = null) {
         document.getElementById("m-genres").innerText =
             data.genres.map((g) => g.name).join(", ") || "N/A";
 
+    const extraInfo = document.getElementById("m-extra-info");
+    if (type === "movie") {
+        let director = "N/A";
+        if (data.credits && data.credits.crew) {
+            const dirObj = data.credits.crew.find((c) => c.job === "Director");
+            if (dirObj) director = dirObj.name;
+        }
+        document.getElementById("m-director").innerText = director;
+        document.getElementById("m-budget").innerText = data.budget ? `$${data.budget.toLocaleString()}` : "N/A";
+        document.getElementById("m-revenue").innerText = data.revenue ? `$${data.revenue.toLocaleString()}` : "N/A";
+        if(extraInfo) extraInfo.style.display = "block";
+    } else {
+        if(extraInfo) extraInfo.style.display = "none";
+    }
+
     const grid = document.getElementById("rec-grid");
     grid.innerHTML = "";
     let hasRecs = false;
