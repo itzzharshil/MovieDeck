@@ -112,7 +112,6 @@ function setActiveNav(id) {
 }
 
 async function loadContent(type) {
-    // Show Loader
     const loader = document.getElementById("global-loader");
     if(loader) loader.classList.remove("hidden");
     
@@ -120,7 +119,6 @@ async function loadContent(type) {
     document.getElementById("hero").style.display = "flex";
     container.innerHTML = "";
     
-    // Start the hero fetch concurrently
     let heroPromise;
     if (type === "home") {
         document.title = "MovieDeck - Home";
@@ -701,7 +699,7 @@ function closeModal(e) {
     if (e.target.id === "modal" || e.target.closest(".modal-close")) {
         document.getElementById("modal").style.display = "none";
         document.body.style.overflow = "auto";
-        document.title = "MovieDeck - Premium Streaming Experience"; // Reset Title
+        document.title = "MovieDeck - Premium Streaming Experience";
         const searchInput = document.getElementById("search-input");
         if (
             document.getElementById("nav-home").classList.contains("active") &&
@@ -715,7 +713,7 @@ function closeModal(e) {
 document.getElementById("search-input").addEventListener("input", (e) => {
     const q = e.target.value;
     if (q.length > 2) {
-        document.title = `MovieDeck - Search: ${q}`; // SEO Title Update
+        document.title = `MovieDeck - Search: ${q}`; 
         const container = document.getElementById("main-content");
         container.style.marginTop = "80px";
         container.innerHTML =
@@ -847,7 +845,6 @@ function playEpisode(tvId, season, episode) {
     const iframe = document.getElementById("video-frame");
     const title = document.getElementById("video-title");
     
-    // Set title
     if(title) title.innerText = `${playbackState.title} - S${season} E${episode}`;
     
     updateVideoControls();
@@ -899,7 +896,6 @@ async function loadExplore() {
     container.style.marginTop = "80px";
     document.getElementById("hero").style.display = "none";
     
-    // Reset state
     exploreState = { page: 1, genre: '', year: '', type: 'movie', loading: false };
     
     container.innerHTML = `
@@ -926,9 +922,8 @@ async function loadExplore() {
     `;
     
     updateGenreOptions(); // Populate genres
-    applyFilters(); // Load initial data
+    applyFilters(); 
     
-    // Add scroll listener for explore
     window.removeEventListener("scroll", handleExploreScroll);
     window.addEventListener("scroll", handleExploreScroll);
 }
@@ -1009,7 +1004,6 @@ async function loadMoreExplore() {
             else url += `&first_air_date_year=${exploreState.year}`;
         }
         
-        // Sort by popularity by default
         url += "&sort_by=popularity.desc";
 
         const res = await fetch(url);
@@ -1053,7 +1047,6 @@ async function playTrailer(item) {
     
     let type = item.media_type || (item.title ? "movie" : "tv");
     
-    // Fetch video data
     try {
         const res = await fetch(`${BASE}/${type}/${item.id}/videos?api_key=${KEY}`);
         const data = await res.json();
@@ -1499,7 +1492,6 @@ function setTheme(themeName, elTarget) {
     applyTheme(themeName);
     localStorage.setItem("app_theme", themeName);
     
-    // Update active circle UI
     if (elTarget) {
         document.querySelectorAll('.theme-dot').forEach(el => {
             el.style.border = "2px solid transparent";
@@ -1519,7 +1511,6 @@ function applyTheme(themeName) {
     }
 }
 
-// Ensure theme applies on load
 initTheme();
 initSettings();
 // ----------------------------------
@@ -1543,7 +1534,6 @@ function toggleRatings() {
         textEl.innerText = show ? "ON" : "OFF";
     }
     
-    // Refresh to immediately show/hide ratings across app
     location.reload();
 }
 // ----------------------------------
@@ -1558,7 +1548,6 @@ async function playRandom() {
     const img = document.getElementById('surprise-img');
     const text = document.getElementById('surprise-text');
     
-    // Reset state & ensure animation restarts
     img.style.opacity = 0;
     inner.style.transition = 'none';
     inner.style.transform = 'rotateY(0deg)';
@@ -1568,16 +1557,13 @@ async function playRandom() {
     text.innerText = "Get Ready!";
     overlay.classList.add('show');
     
-    // Start super-fast spin that slows to zero gracefully at 3600 (10 spins -> front face)
     inner.style.transition = 'transform 3.5s cubic-bezier(0.1, 0.9, 0.2, 1)';
     inner.style.transform = 'rotateY(3600deg)';
     
     try {
-        // Randomly choose between a Movie or TV Show
         const isMovie = Math.random() > 0.5;
         const type = isMovie ? 'movie' : 'tv';
         
-        // Fetch from 20 pages of highly rated content (8.0+ rating, min 300 votes)
         const randomPage = Math.floor(Math.random() * 20) + 1;
         const url = `${BASE}/discover/${type}?api_key=${KEY}&vote_average.gte=8.0&vote_count.gte=300&page=${randomPage}&sort_by=popularity.desc`;
         const res = await fetch(url);
@@ -1587,24 +1573,19 @@ async function playRandom() {
             const randomMovie = data.results[Math.floor(Math.random() * data.results.length)];
             randomMovie.media_type = type;
             
-            // Preload the image so it doesn't pop in blank
             const posterSrc = randomMovie.poster_path 
                 ? `${IMG}${randomMovie.poster_path}` 
                 : 'https://via.placeholder.com/300x450?text=MovieDeck';
                 
             img.src = posterSrc;
             
-            // Wait for the fast spin to completely stop on the front Question Mark face (3.5s)
             setTimeout(() => {
-                // Pre-fade the image smoothly right as the back flip starts
                 img.style.opacity = 1;
                 text.innerText = "You're watching:";
                 
-                // Do a final dramatic, slow 180 degree flip (3600 + 180 = 3780) to reveal the back
                 inner.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
                 inner.style.transform = 'rotateY(3780deg)';
                 
-                // Trigger fireworks confetti
                 if (window.confetti) {
                     confetti({
                         particleCount: 150,
@@ -1614,7 +1595,6 @@ async function playRandom() {
                     });
                 }
                 
-                // Show the movie result for 3 seconds, then open the real modal
                 setTimeout(() => {
                     overlay.classList.remove('show');
                     openModal(randomMovie, type);
