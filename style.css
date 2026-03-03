@@ -600,6 +600,23 @@ body {
 .modal-info-container {
   padding: 30px 50px;
 }
+.modal-body-content {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+.modal-body-content .modal-desc {
+  flex: 2;
+  margin-bottom: 30px;
+}
+.modal-body-content .modal-extra-info {
+  flex: 1;
+  background: var(--glass-bg);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  min-width: 250px;
+}
 .modal-desc {
   line-height: 1.6;
   margin-bottom: 30px;
@@ -2103,6 +2120,14 @@ body {
 }
 
 @media (max-width: 768px) {
+    .modal-body-content {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .modal-body-content .modal-extra-info {
+        width: 100%;
+        min-width: auto;
+    }
     .row-posters[style*="wrap"] {
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
         gap: 12px !important;
