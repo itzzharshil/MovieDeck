@@ -236,7 +236,20 @@ async function setupHeroSlideshow(endpoint) {
                 }
                 
                 heroDesc.innerText = m.overview;
+                
                 heroButtons.style.display = "flex";
+                
+                // Force repaint for backdrop-filter transparency bug on background change without clipping box ghosting
+                const blurBtns = heroButtons.querySelectorAll('.btn-grey');
+                blurBtns.forEach(b => {
+                    b.style.backdropFilter = 'none';
+                    b.style.webkitBackdropFilter = 'none';
+                });
+                void heroButtons.offsetWidth;
+                blurBtns.forEach(b => {
+                    b.style.backdropFilter = '';
+                    b.style.webkitBackdropFilter = '';
+                });
             };
             updateHero();
             heroInterval = setInterval(() => {
@@ -1614,4 +1627,19 @@ async function playRandom() {
         if (dice) dice.classList.remove('fa-spin');
     }
 }
+
+function toggleProfile(e) {
+    if (e) e.stopPropagation();
+    const profileDropdown = document.querySelector('.profile-dropdown');
+    if (profileDropdown) {
+        profileDropdown.classList.toggle('show');
+    }
+}
+
+document.addEventListener('click', function() {
+    const profileDropdown = document.querySelector('.profile-dropdown');
+    if (profileDropdown && profileDropdown.classList.contains('show')) {
+        profileDropdown.classList.remove('show');
+    }
+});
 // ----------------------------------
