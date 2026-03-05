@@ -749,7 +749,7 @@ body {
 }
 .rec-card {
   width: 100%;
-  height: 240px;
+  aspect-ratio: 2 / 3;
   border-radius: 12px;
   object-fit: cover;
   cursor: pointer;
