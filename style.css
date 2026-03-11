@@ -2168,7 +2168,7 @@ body {
         padding: 8px 5px !important;
         font-size: 0.85rem !important;
         text-align: center;
-        min-width: 0; /* allows flex items to shrink below their content size if needed */
+        min-width: 0;
     }
 }
 
