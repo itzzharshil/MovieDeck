@@ -581,7 +581,6 @@ async function openModal(m, forcedType = null) {
         else if (m.first_air_date || m.name) type = "tv";
         else type = "movie";
     }
-    addToHistory(m, type);
     currentModalItem = m;
     currentModalItem.media_type = type;
     document.title = `${m.title || m.name} - MovieDeck`;
@@ -616,7 +615,7 @@ async function openModal(m, forcedType = null) {
 
     if (data.genres)
         document.getElementById("m-genres").innerText =
-            data.genres.map((g) => g.name).join(", ") || "N/A";
+            data.genres.slice(0, 2).map((g) => g.name).join(", ") || "N/A";
 
     const extraInfo = document.getElementById("m-extra-info");
     if (type === "movie") {
@@ -814,6 +813,8 @@ async function playMedia(item) {
     if (!item || !item.id) return;
     let type = item.media_type || (item.title ? "movie" : "tv");
     
+    addToHistory(item, type);
+
     playbackState = {
         type: type,
         id: item.id,
@@ -845,6 +846,10 @@ async function playMedia(item) {
 }
 
 function playEpisode(tvId, season, episode) {
+    if (currentModalItem && currentModalItem.id === tvId) {
+        addToHistory(currentModalItem, 'tv');
+    }
+
     playbackState = {
         type: 'tv',
         id: tvId,
