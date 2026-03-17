@@ -239,17 +239,7 @@ async function setupHeroSlideshow(endpoint) {
                 
                 heroButtons.style.display = "flex";
                 
-                // Force repaint for backdrop-filter transparency bug on background change without clipping box ghosting
-                const blurBtns = heroButtons.querySelectorAll('.btn-grey');
-                blurBtns.forEach(b => {
-                    b.style.backdropFilter = 'none';
-                    b.style.webkitBackdropFilter = 'none';
-                });
-                void heroButtons.offsetWidth;
-                blurBtns.forEach(b => {
-                    b.style.backdropFilter = '';
-                    b.style.webkitBackdropFilter = '';
-                });
+                // Backdrop filter bug hack removed because buttons are now solid color
             };
             updateHero();
             heroInterval = setInterval(() => {
