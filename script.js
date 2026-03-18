@@ -236,10 +236,8 @@ async function setupHeroSlideshow(endpoint) {
                 }
                 
                 heroDesc.innerText = m.overview;
-                
                 heroButtons.style.display = "flex";
-                
-                // Backdrop filter bug hack removed because buttons are now solid color
+                // Backdrop filter hack not needed since we are using transparent ghost buttons natively
             };
             updateHero();
             heroInterval = setInterval(() => {
@@ -1492,7 +1490,7 @@ const themes = {
 };
 
 function initTheme() {
-    const saved = localStorage.getItem("app_theme") || "default";
+    const saved = localStorage.getItem("app_theme") || "cyberpunk";
     applyTheme(saved);
 }
 
