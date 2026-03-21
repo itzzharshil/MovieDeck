@@ -537,8 +537,46 @@ function loadWishlist() {
     list.forEach((m) => {
         const el = createPosterElement(m, m.media_type);
         el.style.margin = "10px";
+        el.style.position = "relative";
+        
+        const removeBtn = document.createElement("div");
+        removeBtn.innerHTML = "<i class='fas fa-minus'></i>";
+        removeBtn.style.position = "absolute";
+        removeBtn.style.top = "10px";
+        removeBtn.style.right = "10px";
+        removeBtn.style.width = "30px";
+        removeBtn.style.height = "30px";
+        removeBtn.style.background = "rgba(255, 0, 0, 0.8)";
+        removeBtn.style.color = "white";
+        removeBtn.style.borderRadius = "50%";
+        removeBtn.style.display = "flex";
+        removeBtn.style.justifyContent = "center";
+        removeBtn.style.alignItems = "center";
+        removeBtn.style.cursor = "pointer";
+        removeBtn.style.zIndex = "10";
+        removeBtn.title = "Remove from Watchlist";
+        
+        removeBtn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromWishlist(m.id);
+        };
+        
+        el.appendChild(removeBtn);
         row.appendChild(el);
     });
+}
+
+function removeFromWishlist(id) {
+    let list = JSON.parse(localStorage.getItem(getWishlistKey()) || "[]");
+    list = list.filter(item => item.id !== id);
+    localStorage.setItem(getWishlistKey(), JSON.stringify(list));
+    
+    const currentPage = document.querySelector(".nav-link.active").id;
+    if(currentPage === 'nav-home' || currentPage === 'nav-movie' || currentPage === 'nav-tv') {
+        updateBadges();
+    }
+    
+    loadWishlist();
 }
 
 
@@ -1133,17 +1171,18 @@ async function openPerson(id, from = null) {
         
         const grid = document.getElementById("p-credits-grid");
         
+        const allCredits = [...(data.cast || []), ...(data.crew || [])];
         const seen = new Set();
-        const cast = (data.cast || [])
+        const credits = allCredits
             .filter(item => {
                 if (seen.has(item.id)) return false;
                 seen.add(item.id);
                 return true;
             })
-            .sort((a,b) => b.popularity - a.popularity)
+            .sort((a,b) => (b.popularity || 0) - (a.popularity || 0))
             .slice(0, 100);
         
-        cast.forEach(m => {
+        credits.forEach(m => {
             if(m.poster_path) {
                 let type = m.media_type || (m.title ? "movie" : "tv");
                 const el = createPosterElement(m, type, "rec-card");
@@ -1545,7 +1584,7 @@ function toggleRatings() {
 // ----------------------------------
 
 // ------ Surprise Me Logic ---------
-async function playRandom() {
+async function playRandom(forcedType = null) {
     const dice = document.querySelector('.fa-dice');
     if (dice) dice.classList.add('fa-spin');
     
@@ -1567,8 +1606,7 @@ async function playRandom() {
     inner.style.transform = 'rotateY(3600deg)';
     
     try {
-        const isMovie = Math.random() > 0.5;
-        const type = isMovie ? 'movie' : 'tv';
+        const type = forcedType ? forcedType : (Math.random() > 0.5 ? 'movie' : 'tv');
         
         const randomPage = Math.floor(Math.random() * 20) + 1;
         const url = `${BASE}/discover/${type}?api_key=${KEY}&vote_average.gte=8.0&vote_count.gte=300&page=${randomPage}&sort_by=popularity.desc`;
@@ -1623,16 +1661,26 @@ async function playRandom() {
 
 function toggleProfile(e) {
     if (e) e.stopPropagation();
-    const profileDropdown = document.querySelector('.profile-dropdown');
+    const profileDropdown = document.querySelector('.profile-container .profile-dropdown');
     if (profileDropdown) {
         profileDropdown.classList.toggle('show');
     }
 }
 
-document.addEventListener('click', function() {
-    const profileDropdown = document.querySelector('.profile-dropdown');
-    if (profileDropdown && profileDropdown.classList.contains('show')) {
-        profileDropdown.classList.remove('show');
+function toggleSurprise(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('surprise-dropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
     }
+}
+
+document.addEventListener('click', function() {
+    const dropdowns = document.querySelectorAll('.profile-dropdown');
+    dropdowns.forEach(dropdown => {
+        if (dropdown && dropdown.classList.contains('show')) {
+            dropdown.classList.remove('show');
+        }
+    });
 });
 // ----------------------------------

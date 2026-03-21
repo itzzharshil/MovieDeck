@@ -77,19 +77,19 @@
         </div>
     </div>
 
-    <div id="adblock-msg" class="adblock-overlay">
+    <!-- <div id="adblock-msg" class="adblock-overlay">
         <div class="adblock-card">
             <div class="adblock-icon-large">
                 <i class="fas fa-shield-alt"></i>
             </div>
             <div class="adblock-text">
                 <h3>AdBlocker Recommended</h3>
-                <p>For the best cinematic experience, we highly recommend enabling an <b>AdBlocker</b>.</p>
+                <p>For the best cinematic experience, we highly recommend enabling an <b>AdBlocker</b>.</p> -->
                 <!-- <p style="font-size: 0.9rem; margin-top: 10px; color: #ccc;">Don't have one? Get <a href="https://adguard.com/" target="_blank" rel="noopener noreferrer" style="color: #46d369; text-decoration: none; font-weight: bold;">AdGuard</a> or search for an ad blocker in your browser's extension store.</p> -->
-            </div>
+            <!-- </div>
             <button class="btn-adblock-close" onclick="closeAdblockMsg()"><i class="fas fa-times"></i></button>
         </div>
-    </div>
+    </div> -->
 
     <nav class="navbar" id="navbar">
       <div class="nav-left">
@@ -114,7 +114,7 @@
       </div>
       <div class="nav-right">
         <div class="search-container">
-          <i class="fas fa-search nav-icon" onclick="toggleSearch()"></i>
+          <i class="fas fa-search nav-icon" style="color: var(--primary);" onclick="toggleSearch()"></i>
           <input
             type="text"
             id="search-input"
@@ -123,8 +123,16 @@
           />
         </div>
         
-        <div class="surprise-box" onclick="playRandom()" title="Surprise Me!">
-          <i class="fas fa-dice nav-icon" style="color: var(--primary);"></i>
+        <div class="surprise-container" style="position: relative; cursor: pointer;">
+          <div class="surprise-box" onclick="toggleSurprise(event)" title="Surprise Me!">
+            <i class="fas fa-dice nav-icon" style="color: var(--primary);"></i>
+          </div>
+          <div class="profile-dropdown" id="surprise-dropdown" onclick="event.stopPropagation()">
+            <a href="#" onclick="playRandom('movie'); toggleSurprise(event)"><i class="fas fa-film" style="margin-right: 10px; width: 20px; text-align: center;"></i> Random Movie</a>
+            <a href="#" onclick="playRandom('tv'); toggleSurprise(event)"><i class="fas fa-tv" style="margin-right: 10px; width: 20px; text-align: center;"></i> Random Series</a>
+            <div class="dropdown-divider"></div>
+            <a href="#" onclick="playRandom(); toggleSurprise(event)"><i class="fas fa-dice" style="margin-right: 10px; width: 20px; text-align: center;"></i> Surprise Me!</a>
+          </div>
         </div>
 
 

@@ -71,7 +71,7 @@ body {
 
 .menu-toggle {
     display: none;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     cursor: pointer;
     margin-left: 20px;
     color: var(--text-main);
@@ -137,7 +137,7 @@ body {
   transition: color 0.3s;
 }
 .nav-icon:hover {
-    color: var(--bg-color);
+    color: var(--primary);
 }
 
 .search-container {
@@ -230,11 +230,7 @@ body {
     height: 20px;
     background: transparent;
 }
-@media (hover: hover) {
-  .profile-container:hover .profile-dropdown {
-    display: flex;
-  }
-}
+/* Removed hover effect, now click only */
 .profile-dropdown.show {
   display: flex;
 }
@@ -1641,6 +1637,22 @@ body {
     visibility: visible;
 }
 @media (max-width: 1024px) {
+  .navbar {
+      padding: 0 20px;
+  }
+  .nav-left {
+      gap: 15px;
+  }
+  .nav-link {
+      font-size: 0.85rem;
+      padding: 6px 8px;
+  }
+  .nav-right {
+      gap: 10px;
+  }
+  .search-input.active {
+      width: 140px;
+  }
   .modal-buttons {
       flex-wrap: nowrap;
       gap: 8px;
@@ -1665,11 +1677,11 @@ body {
   }
   
   .logo {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
   }
   
   .nav-right {
-      gap: 15px;
+      gap: 10px;
   }
   
   .nav-icon {
@@ -1677,17 +1689,9 @@ body {
   }
   
   .search-input.active {
-      width: 150px;
+      width: 120px;
   }
-  .logo {
-      font-size: 1.4rem;
-  }
-  .nav-right {
-      gap: 15px;
-  }
-  .nav-icon {
-      font-size: 1.1rem;
-  }
+  
   .hero-content {
       padding-top: 100px;
       padding-bottom: 80px;
@@ -1860,8 +1864,8 @@ body {
           font-size: 1rem;
       }
       .menu-toggle {
-          font-size: 0.9rem;
-          margin-left: 0;
+          font-size: 1.4rem;
+          margin-left: 5px;
       }
       .modal-buttons .btn .btn-text,
       .hero-buttons .btn .btn-text {
@@ -2252,4 +2256,12 @@ body {
 @keyframes pulseText {
     from { opacity: 0.6; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1.05); }
+}
+
+@media (max-width: 480px) {
+  .navbar { padding: 0 10px; }
+  .logo { font-size: 1.1rem; }
+  .nav-right { gap: 8px; }
+  .search-input.active { width: 100px; padding: 5px 8px; font-size: 0.9rem; }
+  .nav-icon { font-size: 1.05rem; }
 }
