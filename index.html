@@ -51,7 +51,7 @@
     <link rel="prefetch" href="https://api.themoviedb.org/3/trending/all/day?api_key=4803cc94c4172a32fc2851dda48d254f">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=block" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=block" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=14" />
+    <link rel="stylesheet" href="style.css?v=16" />
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/2503/2503508.png">
     <link rel="canonical" href="https://moviedeck.xyz" />
@@ -197,7 +197,7 @@
             class="btn btn-white"
             onclick="playMedia(window.currentHeroItem)"
           >
-            <i class="fas fa-play"></i> <span class="btn-text"></span>Play</span>
+            <i class="fas fa-play"></i> <span class="btn-text">Play</span>
           </button>
           <button class="btn btn-grey" onclick="playTrailer(window.currentHeroItem)">
             <i class="fas fa-film"></i> <span class="btn-text">Trailer</span>
@@ -289,8 +289,33 @@
         <i class="fas fa-times"></i>
       </div>
       <div class="video-container" onclick="event.stopPropagation()">
+
+        <div class="server-bar" onclick="event.stopPropagation()" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span class="server-bar-label"><i class="fas fa-server"></i> Server:</span>
+            <button class="server-btn active" id="srv-vidlink" onclick="switchServer('vidlink')">VidLink</button>
+            <button class="server-btn" id="srv-vidsrccc" onclick="switchServer('vidsrccc')">VidSrc (CC)</button>
+            <button class="server-btn" id="srv-embedsu" onclick="switchServer('embedsu')">Embed.su</button>
+            <button class="server-btn" id="srv-autoembed" onclick="switchServer('autoembed')">AutoEmbed</button>
+            <button class="server-btn" id="srv-vidplay" onclick="switchServer('vidplay')">Vidplay (StreamEx)</button>
+            <button class="server-btn" id="srv-multiembed" onclick="switchServer('multiembed')">MultiEmbed</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button id="btn-id-toggle" class="server-btn" onclick="toggleIdSource()" title="Toggle between IMDb and TMDB ID if stream fails to find content" style="display: inline-flex; align-items: center; gap: 5px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+              <i class="fas fa-fingerprint"></i> Source ID: TMDB
+            </button>
+            <a id="video-external-link" href="#" target="_blank" class="server-btn" style="display: inline-flex; align-items: center; gap: 5px; text-decoration: none; background: rgba(255, 0, 127, 0.1); border: 1px solid var(--primary); color: var(--text-main);">
+              <i class="fas fa-external-link-alt"></i> Open in New Tab
+            </a>
+          </div>
+        </div>
+
+        <div class="player-notice" style="text-align: center; font-size: 0.8rem; color: #a0a0ab; padding: 8px 15px; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
+          <i class="fas fa-info-circle" style="color: var(--primary);"></i>
+          <span>If the stream fails, try switching servers. <strong>Note:</strong> Newly released or upcoming movies will not have active streams yet. Whitelist/disable ad-blockers or shields if the player remains blank.</span>
+        </div>
         
-        <iframe id="video-frame" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+        <iframe id="video-frame" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe>
         
         <div class="episode-nav" id="episode-nav" style="display: none; justify-content: center; padding: 15px;">
             <button onclick="prevEpisode()" id="btn-prev-ep" class="btn btn-grey" style="padding: 5px 15px; font-size: 0.9rem;">
@@ -405,6 +430,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
-    <script src="script.js?v=7" defer></script>
+    <script src="script.js?v=9" defer></script>
   </body>
 </html>

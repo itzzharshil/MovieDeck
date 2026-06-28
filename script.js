@@ -797,29 +797,68 @@ window.addEventListener("scroll", () => {
 let playbackState = {
     type: 'movie',
     id: null,
+    imdbId: null,
+    useImdb: false,
     season: 1,
     episode: 1,
-    server: 'vidsrc',
+    server: 'vidlink',
     title: ''
 };
 
 
 function getEmbedUrl() {
-    const { type, id, season, episode, server } = playbackState;
-    if (server === 'vidsrc') {
-        return type === 'movie' 
-            ? `https://vidsrc.vip/embed/movie/${id}`
-            : `https://vidsrc.vip/embed/tv/${id}/${season}/${episode}`;
-    } else if (server === 'vidsrc2') {
+    const { type, id, imdbId, useImdb, season, episode, server } = playbackState;
+    const mediaId = (useImdb && imdbId) ? imdbId : id;
+    if (server === 'vidlink') {
+        // vidlink.pro
         return type === 'movie'
-            ? `https://vidsrc.to/embed/movie/${id}`
-            : `https://vidsrc.to/embed/tv/${id}/${season}/${episode}`;
-    } else if (server === 'superembed') {
+            ? `https://vidlink.pro/movie/${mediaId}?autoplay=true&primaryColor=ff007f`
+            : `https://vidlink.pro/tv/${mediaId}/${season}/${episode}?autoplay=true&primaryColor=ff007f`;
+    } else if (server === 'vidsrccc') {
+        // vidsrc.cc
         return type === 'movie'
-             ? `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1`
-             : `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${season}&e=${episode}`;
+            ? `https://vidsrc.cc/v2/embed/movie/${mediaId}`
+            : `https://vidsrc.cc/v2/embed/tv/${mediaId}/${season}/${episode}`;
+    } else if (server === 'embedsu') {
+        // embed.su
+        return type === 'movie'
+             ? `https://embed.su/embed/movie/${mediaId}`
+             : `https://embed.su/embed/tv/${mediaId}/${season}/${episode}`;
+    } else if (server === 'autoembed') {
+        // player.autoembed.cc
+        return type === 'movie'
+             ? `https://player.autoembed.cc/embed/movie/${mediaId}`
+             : `https://player.autoembed.cc/embed/tv/${mediaId}/${season}/${episode}`;
+    } else if (server === 'vidplay') {
+        // streamex.sh (vidplays)
+        const stId = id || imdbId;
+        return type === 'movie'
+             ? `https://streamex.sh/watch/movie/${stId}?server=vidplays`
+             : `https://streamex.sh/watch/tv/${stId}?s=${season}&e=${episode}&server=vidplays`;
+    } else if (server === 'multiembed') {
+        // multiembed.to
+        return type === 'movie'
+             ? `https://multiembed.to/?video_id=${mediaId}`
+             : `https://multiembed.to/?video_id=${mediaId}&s=${season}&e=${episode}`;
     }
     return "";
+}
+
+function updateIframeSource() {
+    const url = getEmbedUrl();
+    const iframe = document.getElementById("video-frame");
+    if (iframe) iframe.src = url;
+    const extLink = document.getElementById("video-external-link");
+    if (extLink) extLink.href = url;
+}
+
+function toggleIdSource() {
+    playbackState.useImdb = !playbackState.useImdb;
+    const btn = document.getElementById("btn-id-toggle");
+    if (btn) {
+        btn.innerHTML = `<i class="fas fa-fingerprint"></i> Source ID: ${playbackState.useImdb ? 'IMDb' : 'TMDB'}`;
+    }
+    updateIframeSource();
 }
 
 function updateVideoControls() {
@@ -841,19 +880,30 @@ async function playMedia(item) {
     
     addToHistory(item, type);
 
+    let imdbId = null;
+    try {
+        const res = await fetch(`${BASE}/${type}/${item.id}?api_key=${KEY}&append_to_response=external_ids`);
+        const data = await res.json();
+        imdbId = data.imdb_id || (data.external_ids && data.external_ids.imdb_id) || null;
+    } catch (e) {
+        console.error("Failed to fetch IMDb ID:", e);
+    }
+
     playbackState = {
         type: type,
         id: item.id,
+        imdbId: imdbId,
+        useImdb: false,
         season: 1,
         episode: 1,
-        season: 1,
-        episode: 1,
-        server: 'vidsrc',
+        server: playbackState.server || 'vidlink',
         title: item.title || item.name
     };
 
+    const btn = document.getElementById("btn-id-toggle");
+    if (btn) btn.innerHTML = `<i class="fas fa-fingerprint"></i> Source ID: TMDB`;
+
     const overlay = document.getElementById("video-overlay");
-    const iframe = document.getElementById("video-frame");
     const title = document.getElementById("video-title");
 
     if(title) title.innerText = playbackState.title;
@@ -867,26 +917,41 @@ async function playMedia(item) {
         if(epNav) epNav.style.display = 'flex';
     }
     
-    iframe.src = getEmbedUrl();
+    updateIframeSource();
     overlay.style.display = "flex";
 }
 
-function playEpisode(tvId, season, episode) {
+async function playEpisode(tvId, season, episode) {
     if (currentModalItem && currentModalItem.id === tvId) {
         addToHistory(currentModalItem, 'tv');
+    }
+
+    let imdbId = playbackState.imdbId;
+    if (!imdbId || playbackState.id !== tvId) {
+        try {
+            const res = await fetch(`${BASE}/tv/${tvId}?api_key=${KEY}&append_to_response=external_ids`);
+            const data = await res.json();
+            imdbId = (data.external_ids && data.external_ids.imdb_id) || null;
+        } catch (e) {
+            console.error("Failed to fetch IMDb ID:", e);
+        }
     }
 
     playbackState = {
         type: 'tv',
         id: tvId,
+        imdbId: imdbId,
+        useImdb: false,
         season: parseInt(season),
         episode: parseInt(episode),
-        server: 'vidsrc',
-        title: '' 
+        server: playbackState.server || 'vidlink',
+        title: playbackState.title || '' 
     };
+
+    const btn = document.getElementById("btn-id-toggle");
+    if (btn) btn.innerHTML = `<i class="fas fa-fingerprint"></i> Source ID: TMDB`;
     
     const overlay = document.getElementById("video-overlay");
-    const iframe = document.getElementById("video-frame");
     const title = document.getElementById("video-title");
     
     if(title) title.innerText = `${playbackState.title} - S${season} E${episode}`;
@@ -895,7 +960,7 @@ function playEpisode(tvId, season, episode) {
     const epNav = document.getElementById("episode-nav");
     if(epNav) epNav.style.display = 'flex';
     
-    iframe.src = getEmbedUrl();
+    updateIframeSource();
     overlay.style.display = "flex";
 }
 
@@ -904,19 +969,38 @@ function closeVideo() {
     const iframe = document.getElementById("video-frame");
     overlay.style.display = "none";
     iframe.src = ""; // Stop video
+    const extLink = document.getElementById("video-external-link");
+    if (extLink) extLink.href = "#";
+    const btn = document.getElementById("btn-id-toggle");
+    if (btn) btn.innerHTML = `<i class="fas fa-fingerprint"></i> Source ID: TMDB`;
+    // Reset server bar to default
+    document.querySelectorAll(".server-btn").forEach(b => b.classList.remove("active"));
+    const defaultBtn = document.getElementById("srv-vidlink");
+    if (defaultBtn) defaultBtn.classList.add("active");
+    playbackState.server = 'vidlink';
+}
+
+function switchServer(server) {
+    playbackState.server = server;
+    // Update active button highlight
+    document.querySelectorAll(".server-btn").forEach(b => b.classList.remove("active"));
+    const activeBtn = document.getElementById(`srv-${server}`);
+    if (activeBtn) activeBtn.classList.add("active");
+    // Reload iframe with new server
+    updateIframeSource();
 }
 
 function nextEpisode() {
     playbackState.episode++;
     updateVideoControls();
-    document.getElementById("video-frame").src = getEmbedUrl();
+    updateIframeSource();
 }
 
 function prevEpisode() {
     if(playbackState.episode > 1) {
         playbackState.episode--;
         updateVideoControls();
-        document.getElementById("video-frame").src = getEmbedUrl();
+        updateIframeSource();
     }
 }
 
