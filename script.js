@@ -794,214 +794,310 @@ window.addEventListener("scroll", () => {
     }
 });
 
+// --- PLAYER & SERVERS ---------------------------------------------------
+// Only servers verified to load inside an iframe (Nov 2026). All take TMDB ids.
+// Sources: the same providers StreamEx and CineHD use.
+const SERVERS = [
+    {
+        key: 'vidfast',
+        host: 'VidFast',
+        movie: (id) => `https://vidfast.vc/movie/${id}?autoPlay=true&theme=ff007f`,
+        tv: (id, s, e) => `https://vidfast.vc/tv/${id}/${s}/${e}?autoPlay=true&theme=ff007f`,
+    },
+    {
+        key: 'vidlink',
+        host: 'VidLink',
+        movie: (id) => `https://vidlink.pro/movie/${id}?autoplay=true&primaryColor=ff007f`,
+        tv: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}?autoplay=true&primaryColor=ff007f`,
+    },
+    {
+        key: 'xpass',
+        host: 'Xpass',
+        movie: (id) => `https://play.xpass.top/e/movie/${id}`,
+        tv: (id, s, e) => `https://play.xpass.top/e/tv/${id}/${s}/${e}`,
+    },
+    {
+        key: 'vidrock',
+        host: 'VidRock',
+        movie: (id) => `https://vidrock.net/embed/movie/${id}?autoplay=true`,
+        tv: (id, s, e) => `https://vidrock.net/embed/tv/${id}/${s}/${e}?autoplay=true&nextbutton=false&episodeselector=false`,
+    },
+    {
+        key: 'vidnest',
+        host: 'VidNest',
+        movie: (id) => `https://vidnest.fun/movie/${id}`,
+        tv: (id, s, e) => `https://vidnest.fun/tv/${id}/${s}/${e}`,
+    },
+    {
+        key: 'primesrc',
+        host: 'PrimeSrc',
+        movie: (id) => `https://primesrc.me/embed/movie?tmdb=${id}`,
+        tv: (id, s, e) => `https://primesrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
+    },
+];
+
+const SERVER_PREF_KEY = 'preferred_server';
+
+function loadPreferredServer() {
+    try {
+        const saved = localStorage.getItem(SERVER_PREF_KEY);
+        if (SERVERS.some(s => s.key === saved)) return saved;
+    } catch (e) {}
+    return SERVERS[0].key;
+}
+
+function savePreferredServer(key) {
+    try { localStorage.setItem(SERVER_PREF_KEY, key); } catch (e) {}
+}
+
 let playbackState = {
     type: 'movie',
     id: null,
-    imdbId: null,
-    useImdb: false,
     season: 1,
     episode: 1,
-    server: 'vidlink',
-    title: ''
+    server: loadPreferredServer(),
+    title: '',
+    seasons: null, // [{season_number, episode_count}] for TV, used by next/prev
 };
 
+function serverIndex(key = playbackState.server) {
+    const i = SERVERS.findIndex(s => s.key === key);
+    return i === -1 ? 0 : i;
+}
 
 function getEmbedUrl() {
-    const { type, id, imdbId, useImdb, season, episode, server } = playbackState;
-    const mediaId = (useImdb && imdbId) ? imdbId : id;
-    if (server === 'vidlink') {
-        // vidlink.pro
-        return type === 'movie'
-            ? `https://vidlink.pro/movie/${mediaId}?autoplay=true&primaryColor=ff007f`
-            : `https://vidlink.pro/tv/${mediaId}/${season}/${episode}?autoplay=true&primaryColor=ff007f`;
-    } else if (server === 'vidsrccc') {
-        // vidsrc.cc
-        return type === 'movie'
-            ? `https://vidsrc.cc/v2/embed/movie/${mediaId}`
-            : `https://vidsrc.cc/v2/embed/tv/${mediaId}/${season}/${episode}`;
-    } else if (server === 'embedsu') {
-        // embed.su
-        return type === 'movie'
-             ? `https://embed.su/embed/movie/${mediaId}`
-             : `https://embed.su/embed/tv/${mediaId}/${season}/${episode}`;
-    } else if (server === 'autoembed') {
-        // player.autoembed.cc
-        return type === 'movie'
-             ? `https://player.autoembed.cc/embed/movie/${mediaId}`
-             : `https://player.autoembed.cc/embed/tv/${mediaId}/${season}/${episode}`;
-    } else if (server === 'vidplay') {
-        // streamex.sh (vidplays)
-        const stId = id || imdbId;
-        return type === 'movie'
-             ? `https://streamex.sh/watch/movie/${stId}?server=vidplays`
-             : `https://streamex.sh/watch/tv/${stId}?s=${season}&e=${episode}&server=vidplays`;
-    } else if (server === 'multiembed') {
-        // multiembed.to
-        return type === 'movie'
-             ? `https://multiembed.to/?video_id=${mediaId}`
-             : `https://multiembed.to/?video_id=${mediaId}&s=${season}&e=${episode}`;
+    const { type, id, season, episode } = playbackState;
+    const server = SERVERS[serverIndex()];
+    return type === 'movie' ? server.movie(id) : server.tv(id, season, episode);
+}
+
+function renderServerMenu() {
+    const menu = document.getElementById('src-menu');
+    if (!menu) return;
+    const active = serverIndex();
+    menu.innerHTML = SERVERS.map((s, i) => `
+        <button class="src-option${i === active ? ' is-active' : ''}" role="option"
+                aria-selected="${i === active}" onclick="switchServer('${s.key}')">
+            <span class="src-num">${i + 1}</span>
+            <span class="src-name">Server ${i + 1}${i === 0 ? '<em>Recommended</em>' : ''}</span>
+            <span class="src-host">${s.host}</span>
+        </button>`).join('');
+    const current = document.getElementById('src-current');
+    if (current) current.textContent = active + 1;
+}
+
+function toggleServerMenu(force) {
+    const picker = document.getElementById('src-picker');
+    const trigger = document.getElementById('src-trigger');
+    if (!picker) return;
+    const open = typeof force === 'boolean' ? force : !picker.classList.contains('is-open');
+    picker.classList.toggle('is-open', open);
+    trigger.setAttribute('aria-expanded', String(open));
+    if (open) {
+        const activeOpt = picker.querySelector('.src-option.is-active');
+        if (activeOpt) activeOpt.focus({ preventScroll: true });
     }
-    return "";
+}
+
+document.addEventListener('click', (e) => {
+    const picker = document.getElementById('src-picker');
+    if (picker && picker.classList.contains('is-open') && !picker.contains(e.target)) {
+        toggleServerMenu(false);
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    const overlay = document.getElementById('video-overlay');
+    if (!overlay || !overlay.classList.contains('is-open')) return;
+    if (e.key === 'Escape') {
+        const picker = document.getElementById('src-picker');
+        if (picker && picker.classList.contains('is-open')) {
+            toggleServerMenu(false);
+            document.getElementById('src-trigger').focus();
+        } else {
+            closeVideo();
+        }
+    }
+});
+
+let veilTimer = null;
+
+function showVeil() {
+    const veil = document.getElementById('player-veil');
+    const text = document.getElementById('player-veil-text');
+    if (text) text.textContent = `Connecting to Server ${serverIndex() + 1}…`;
+    if (veil) veil.classList.remove('is-hidden');
+}
+
+function hideVeil() {
+    const veil = document.getElementById('player-veil');
+    if (veil) veil.classList.add('is-hidden');
 }
 
 function updateIframeSource() {
     const url = getEmbedUrl();
-    const iframe = document.getElementById("video-frame");
-    if (iframe) iframe.src = url;
-    const extLink = document.getElementById("video-external-link");
+    const iframe = document.getElementById('video-frame');
+    if (iframe) {
+        showVeil();
+        // Some providers fire `load` late (they keep streaming resources), so
+        // never keep the veil over a usable player for more than a few seconds.
+        clearTimeout(veilTimer);
+        veilTimer = setTimeout(hideVeil, 4000);
+        iframe.onload = () => { if (iframe.src && iframe.src !== 'about:blank') hideVeil(); };
+        iframe.src = url;
+    }
+    const extLink = document.getElementById('video-external-link');
     if (extLink) extLink.href = url;
+    renderServerMenu();
 }
 
-function toggleIdSource() {
-    playbackState.useImdb = !playbackState.useImdb;
-    const btn = document.getElementById("btn-id-toggle");
-    if (btn) {
-        btn.innerHTML = `<i class="fas fa-fingerprint"></i> Source ID: ${playbackState.useImdb ? 'IMDb' : 'TMDB'}`;
-    }
-    updateIframeSource();
+function episodeCount(season) {
+    const s = (playbackState.seasons || []).find(x => x.season_number === season);
+    return s ? s.episode_count : null;
 }
 
 function updateVideoControls() {
-    const { type, season, episode } = playbackState;
-    const nav = document.getElementById("episode-nav");
-    const info = document.getElementById("current-ep-info");
-    
+    const { type, season, episode, title } = playbackState;
+    const nav = document.getElementById('episode-nav');
+    const info = document.getElementById('current-ep-info');
+    const titleEl = document.getElementById('video-title');
+    const subEl = document.getElementById('video-subtitle');
+
+    if (titleEl) titleEl.textContent = title;
+
     if (type === 'movie') {
-        nav.style.display = "none";
-    } else {
-        nav.style.display = "flex";
-        info.innerText = `S${season} E${episode}`;
+        nav.hidden = true;
+        if (subEl) subEl.textContent = '';
+        return;
     }
+    nav.hidden = false;
+    info.textContent = `S${season} · E${episode}`;
+    if (subEl) subEl.textContent = `Season ${season}, Episode ${episode}`;
+
+    const seasons = (playbackState.seasons || []).map(s => s.season_number);
+    const lastSeason = seasons.length ? Math.max(...seasons) : null;
+    const count = episodeCount(season);
+    document.getElementById('btn-prev-ep').disabled = season <= 1 && episode <= 1;
+    document.getElementById('btn-next-ep').disabled =
+        count !== null && episode >= count && lastSeason !== null && season >= lastSeason;
+}
+
+async function fetchSeasons(tvId) {
+    try {
+        const res = await fetch(`${BASE}/tv/${tvId}?api_key=${KEY}`);
+        const data = await res.json();
+        return (data.seasons || [])
+            .filter(s => s.season_number > 0)
+            .map(s => ({ season_number: s.season_number, episode_count: s.episode_count }));
+    } catch (e) {
+        return null;
+    }
+}
+
+function openPlayer() {
+    const overlay = document.getElementById('video-overlay');
+    overlay.classList.add('is-open');
+    document.body.classList.add('player-open');
+    updateVideoControls();
+    updateIframeSource();
 }
 
 async function playMedia(item) {
     if (!item || !item.id) return;
-    let type = item.media_type || (item.title ? "movie" : "tv");
-    
+    const type = item.media_type || (item.title ? 'movie' : 'tv');
     addToHistory(item, type);
 
-    let imdbId = null;
-    try {
-        const res = await fetch(`${BASE}/${type}/${item.id}?api_key=${KEY}&append_to_response=external_ids`);
-        const data = await res.json();
-        imdbId = data.imdb_id || (data.external_ids && data.external_ids.imdb_id) || null;
-    } catch (e) {
-        console.error("Failed to fetch IMDb ID:", e);
-    }
-
     playbackState = {
-        type: type,
+        ...playbackState,
+        type,
         id: item.id,
-        imdbId: imdbId,
-        useImdb: false,
         season: 1,
         episode: 1,
-        server: playbackState.server || 'vidlink',
-        title: item.title || item.name
+        title: item.title || item.name || '',
+        seasons: null,
     };
+    openPlayer();
 
-    const btn = document.getElementById("btn-id-toggle");
-    if (btn) btn.innerHTML = `<i class="fas fa-fingerprint"></i> Source ID: TMDB`;
-
-    const overlay = document.getElementById("video-overlay");
-    const title = document.getElementById("video-title");
-
-    if(title) title.innerText = playbackState.title;
-    
-    updateVideoControls();
-    
-    const epNav = document.getElementById("episode-nav");
-    if (type === 'movie') {
-        if(epNav) epNav.style.display = 'none';
-    } else {
-        if(epNav) epNav.style.display = 'flex';
+    if (type === 'tv') {
+        playbackState.seasons = await fetchSeasons(item.id);
+        updateVideoControls();
     }
-    
-    updateIframeSource();
-    overlay.style.display = "flex";
 }
 
 async function playEpisode(tvId, season, episode) {
     if (currentModalItem && currentModalItem.id === tvId) {
         addToHistory(currentModalItem, 'tv');
     }
-
-    let imdbId = playbackState.imdbId;
-    if (!imdbId || playbackState.id !== tvId) {
-        try {
-            const res = await fetch(`${BASE}/tv/${tvId}?api_key=${KEY}&append_to_response=external_ids`);
-            const data = await res.json();
-            imdbId = (data.external_ids && data.external_ids.imdb_id) || null;
-        } catch (e) {
-            console.error("Failed to fetch IMDb ID:", e);
-        }
-    }
-
+    const sameShow = playbackState.id === tvId && playbackState.type === 'tv';
     playbackState = {
+        ...playbackState,
         type: 'tv',
         id: tvId,
-        imdbId: imdbId,
-        useImdb: false,
-        season: parseInt(season),
-        episode: parseInt(episode),
-        server: playbackState.server || 'vidlink',
-        title: playbackState.title || '' 
+        season: parseInt(season, 10),
+        episode: parseInt(episode, 10),
+        title: (currentModalItem && currentModalItem.id === tvId)
+            ? (currentModalItem.name || currentModalItem.title || '')
+            : playbackState.title,
+        seasons: sameShow ? playbackState.seasons : null,
     };
+    openPlayer();
 
-    const btn = document.getElementById("btn-id-toggle");
-    if (btn) btn.innerHTML = `<i class="fas fa-fingerprint"></i> Source ID: TMDB`;
-    
-    const overlay = document.getElementById("video-overlay");
-    const title = document.getElementById("video-title");
-    
-    if(title) title.innerText = `${playbackState.title} - S${season} E${episode}`;
-    
-    updateVideoControls();
-    const epNav = document.getElementById("episode-nav");
-    if(epNav) epNav.style.display = 'flex';
-    
-    updateIframeSource();
-    overlay.style.display = "flex";
+    if (!playbackState.seasons) {
+        playbackState.seasons = await fetchSeasons(tvId);
+        updateVideoControls();
+    }
 }
 
 function closeVideo() {
-    const overlay = document.getElementById("video-overlay");
-    const iframe = document.getElementById("video-frame");
-    overlay.style.display = "none";
-    iframe.src = ""; // Stop video
-    const extLink = document.getElementById("video-external-link");
-    if (extLink) extLink.href = "#";
-    const btn = document.getElementById("btn-id-toggle");
-    if (btn) btn.innerHTML = `<i class="fas fa-fingerprint"></i> Source ID: TMDB`;
-    // Reset server bar to default
-    document.querySelectorAll(".server-btn").forEach(b => b.classList.remove("active"));
-    const defaultBtn = document.getElementById("srv-vidlink");
-    if (defaultBtn) defaultBtn.classList.add("active");
-    playbackState.server = 'vidlink';
+    const overlay = document.getElementById('video-overlay');
+    const iframe = document.getElementById('video-frame');
+    overlay.classList.remove('is-open');
+    document.body.classList.remove('player-open');
+    toggleServerMenu(false);
+    clearTimeout(veilTimer);
+    iframe.onload = null;
+    iframe.src = 'about:blank'; // stop playback
+    const extLink = document.getElementById('video-external-link');
+    if (extLink) extLink.href = '#';
 }
 
-function switchServer(server) {
-    playbackState.server = server;
-    // Update active button highlight
-    document.querySelectorAll(".server-btn").forEach(b => b.classList.remove("active"));
-    const activeBtn = document.getElementById(`srv-${server}`);
-    if (activeBtn) activeBtn.classList.add("active");
-    // Reload iframe with new server
+function switchServer(key) {
+    playbackState.server = key;
+    savePreferredServer(key);
+    toggleServerMenu(false);
     updateIframeSource();
 }
 
+function nextServer() {
+    const next = SERVERS[(serverIndex() + 1) % SERVERS.length];
+    switchServer(next.key);
+}
+
 function nextEpisode() {
-    playbackState.episode++;
+    const count = episodeCount(playbackState.season);
+    if (count !== null && playbackState.episode >= count) {
+        const hasNextSeason = (playbackState.seasons || []).some(s => s.season_number === playbackState.season + 1);
+        if (!hasNextSeason) return;
+        playbackState.season++;
+        playbackState.episode = 1;
+    } else {
+        playbackState.episode++;
+    }
     updateVideoControls();
     updateIframeSource();
 }
 
 function prevEpisode() {
-    if(playbackState.episode > 1) {
+    if (playbackState.episode > 1) {
         playbackState.episode--;
-        updateVideoControls();
-        updateIframeSource();
+    } else if (playbackState.season > 1) {
+        playbackState.season--;
+        playbackState.episode = episodeCount(playbackState.season) || 1;
+    } else {
+        return;
     }
+    updateVideoControls();
+    updateIframeSource();
 }
 
 function toggleMobileMenu() {

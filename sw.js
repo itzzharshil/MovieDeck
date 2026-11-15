@@ -1,4 +1,4 @@
-const CACHE_NAME = "movie-deck-v10";
+const CACHE_NAME = "movie-deck-v11";
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
@@ -35,10 +35,29 @@ self.addEventListener("activate", (event) => {
 });
 
 // Fetch Event
+// Same-origin pages, scripts and styles: network first so updates ship
+// immediately; fall back to cache when offline. Everything else: cache first.
 self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
+
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req, { ignoreSearch: true }))
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
+    caches.match(req).then((response) => response || fetch(req))
   );
 });
