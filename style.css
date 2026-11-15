@@ -2407,8 +2407,8 @@ body.player-open { overflow: hidden; }
   gap: 8px;
   padding: 0 12px 0 14px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 0, 127, 0.35);
-  background: rgba(255, 0, 127, 0.1);
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
   font-size: 0.85rem;
   transition: background-color 150ms ease, transform 160ms var(--ease-out);
 }
@@ -2485,10 +2485,10 @@ body.player-open { overflow: hidden; }
   padding: 2px 6px;
   border-radius: 999px;
   color: var(--primary);
-  background: rgba(255, 0, 127, 0.12);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
 }
 .src-host { font-size: 0.75rem; color: var(--player-muted); }
-.src-option.is-active { background: rgba(255, 0, 127, 0.12); }
+.src-option.is-active { background: color-mix(in srgb, var(--primary) 12%, transparent); }
 .src-option.is-active .src-num { background: var(--primary); color: #fff; }
 
 /* Episode stepper */
@@ -2540,5 +2540,268 @@ body.player-open { overflow: hidden; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================================
+   SHARED UI — search, menus and Surprise Me use the same
+   surfaces, radii and accent as the player.
+   ========================================================= */
+:root {
+  --ui-surface: #17171f;
+  --ui-field: rgba(255, 255, 255, 0.06);
+  --ui-line: rgba(255, 255, 255, 0.08);
+  --ui-muted: #8b8b98;
+  --ui-radius: 14px;
+  --ui-radius-sm: 10px;
+  --ui-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--primary);
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  .link-btn:hover { text-decoration: underline; }
+}
+
+/* Search field */
+.search-input {
+  height: 36px;
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: width 220ms var(--ease-out), padding 220ms var(--ease-out), opacity 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+.search-input::placeholder { color: var(--ui-muted); }
+.search-input.active {
+  width: 240px;
+  padding: 0 12px;
+  margin-left: 10px;
+  opacity: 1;
+  background: var(--ui-surface);
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  box-shadow: 0 0 0 1px var(--ui-line);
+}
+.search-input.active:focus { box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 60%, transparent), 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent); }
+
+@media (max-width: 768px) {
+  .search-input.active {
+    position: absolute;
+    top: 72px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    margin: 0;
+    height: 44px;
+    font-size: 1rem;
+    z-index: 1001;
+    box-shadow: var(--ui-shadow);
+  }
+  .search-input.active:focus { box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 60%, transparent), 0 16px 40px rgba(0, 0, 0, 0.55); }
+}
+
+/* Search results */
+.search-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.search-head h2 { margin-bottom: 0; }
+/* Line up with the heading text (heading margin + 14px accent bar). */
+.search-note {
+  margin: 0 20px 0 54px;
+  font-size: 0.88rem;
+  color: var(--ui-muted);
+}
+.search-note strong { color: var(--text-main); font-weight: 600; }
+.search-note .link-btn { margin-left: 6px; }
+.search-note[hidden] { display: none; }
+.search-empty {
+  width: 100%;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--ui-muted);
+  font-size: 0.92rem;
+  text-align: center;
+  padding: 0 20px;
+}
+.search-empty i { font-size: 1.4rem; opacity: 0.6; }
+@media (max-width: 768px) {
+  .search-page { padding-top: 56px; }
+  .search-note { margin-left: 34px; }
+}
+@media (max-width: 480px) {
+  .search-note { margin-left: 29px; }
+}
+
+/* Menus share one look */
+.profile-dropdown,
+.surprise-panel {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ui-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 0;
+  border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow);
+  transform-origin: top right;
+  opacity: 0;
+  transform: scale(0.96) translateY(-4px);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 150ms var(--ease-out), transform 150ms var(--ease-out), visibility 0s linear 150ms;
+  z-index: 2000;
+}
+.profile-dropdown.show,
+.surprise-panel.show {
+  display: flex;
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out), visibility 0s;
+}
+.profile-dropdown { width: 220px; padding: 6px; }
+.profile-dropdown a {
+  display: flex;
+  align-items: center;
+  padding: 9px 10px;
+  border: 0;
+  border-left: 0;
+  border-radius: 9px;
+  font-size: 0.88rem;
+  color: var(--text-main);
+  transition: background-color 120ms ease;
+}
+.profile-dropdown a i { color: var(--ui-muted); }
+@media (hover: hover) and (pointer: fine) {
+  .profile-dropdown a:hover { background: rgba(255, 255, 255, 0.06); border-left: 0; color: var(--text-main); }
+}
+.dropdown-divider { margin: 4px 6px; background: var(--ui-line); }
+
+/* Surprise Me panel */
+.surprise-box { transition: transform 200ms var(--ease-out); }
+@media (hover: hover) and (pointer: fine) {
+  .surprise-box:hover { transform: rotate(90deg); }
+}
+.surprise-panel {
+  width: 320px;
+  padding: 14px;
+  gap: 10px;
+  cursor: default;
+  font-size: 0.9rem;
+}
+.sp-label {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ui-muted);
+}
+.sp-hint { font-weight: 400; opacity: 0.8; }
+.sp-row { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.sp-segment {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-field);
+}
+.sp-segment button {
+  height: 32px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ui-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.sp-segment button.is-active { background: rgba(255, 255, 255, 0.12); color: var(--text-main); }
+.sp-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sp-chip {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ui-field);
+  box-shadow: inset 0 0 0 1px var(--ui-line);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background-color 120ms ease, box-shadow 120ms ease, color 120ms ease, transform 160ms var(--ease-out);
+}
+.sp-chip.is-active {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 55%, transparent);
+  color: #fff;
+}
+.sp-chip:disabled { opacity: 0.3; cursor: not-allowed; }
+.sp-go {
+  margin-top: 4px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: var(--primary);
+  color: #fff;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 150ms ease, transform 160ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-segment button:not(.is-active):hover { color: var(--text-main); }
+  .sp-chip:not(:disabled):not(.is-active):hover { background: rgba(255, 255, 255, 0.1); }
+  .sp-go:hover { filter: brightness(1.1); }
+}
+.sp-chip:not(:disabled):active,
+.sp-segment button:active,
+.sp-go:active { transform: scale(0.97); }
+.surprise-panel :focus-visible,
+.profile-dropdown :focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* The nav's .surprise-container shares a class with the reveal overlay,
+   which gives it a 3D perspective; that must not apply in the navbar. */
+.nav-right .surprise-container { perspective: none; display: block; }
+
+@media (max-width: 768px) {
+  /* Anchor the panel to the full-width navbar instead of the dice icon. */
+  .nav-right .surprise-container { position: static !important; }
+  .surprise-panel {
+    position: absolute;
+    top: 66px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    transform-origin: top center;
   }
 }

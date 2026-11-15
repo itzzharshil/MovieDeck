@@ -51,7 +51,7 @@
     <link rel="prefetch" href="https://api.themoviedb.org/3/trending/all/day?api_key=4803cc94c4172a32fc2851dda48d254f">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=block" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=block" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=17" />
+    <link rel="stylesheet" href="style.css?v=18" />
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/2503/2503508.png">
     <link rel="canonical" href="https://moviedeck.xyz" />
@@ -127,11 +127,21 @@
           <div class="surprise-box" onclick="toggleSurprise(event)" title="Surprise Me!">
             <i class="fas fa-dice nav-icon" style="color: var(--primary);"></i>
           </div>
-          <div class="profile-dropdown" id="surprise-dropdown" onclick="event.stopPropagation()">
-            <a href="#" onclick="playRandom('movie'); toggleSurprise(event)"><i class="fas fa-film" style="margin-right: 10px; width: 20px; text-align: center;"></i> Random Movie</a>
-            <a href="#" onclick="playRandom('tv'); toggleSurprise(event)"><i class="fas fa-tv" style="margin-right: 10px; width: 20px; text-align: center;"></i> Random Series</a>
-            <div class="dropdown-divider"></div>
-            <a href="#" onclick="playRandom(); toggleSurprise(event)"><i class="fas fa-dice" style="margin-right: 10px; width: 20px; text-align: center;"></i> Surprise Me!</a>
+          <div class="surprise-panel" id="surprise-dropdown" role="dialog" aria-label="Surprise me" onclick="event.stopPropagation()">
+            <p class="sp-label">What do you feel like?</p>
+            <div class="sp-segment" role="radiogroup" aria-label="Type">
+              <button type="button" role="radio" data-type="any" onclick="setSurpriseType('any')">Anything</button>
+              <button type="button" role="radio" data-type="movie" onclick="setSurpriseType('movie')">Movie</button>
+              <button type="button" role="radio" data-type="tv" onclick="setSurpriseType('tv')">Series</button>
+            </div>
+            <div class="sp-row">
+              <p class="sp-label">Genres <span class="sp-hint">pick any</span></p>
+              <button type="button" class="link-btn" id="sp-clear" onclick="clearSurpriseGenres()" hidden>Clear</button>
+            </div>
+            <div class="sp-chips" id="sp-chips"></div>
+            <button type="button" class="sp-go" onclick="startSurprise()">
+              <i class="fas fa-dice"></i> Surprise me
+            </button>
           </div>
         </div>
 
@@ -434,6 +444,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
-    <script src="script.js?v=10" defer></script>
+    <script src="script.js?v=11" defer></script>
   </body>
 </html>

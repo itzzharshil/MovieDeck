@@ -748,37 +748,415 @@ function closeModal(e) {
     }
 }
 
-document.getElementById("search-input").addEventListener("input", (e) => {
-    const q = e.target.value;
-    if (q.length > 2) {
-        document.title = `MovieDeck - Search: ${q}`; 
-        const container = document.getElementById("main-content");
-        container.style.marginTop = "80px";
-        container.innerHTML =
-            '<div class="category-row" style="margin-top: 20px;"><h2>Results</h2><div class="row-posters" id="res" style="flex-wrap:wrap; overflow:visible"></div></div>';
-        document.getElementById("hero").style.display = "none";
-        fetch(`${BASE}/search/multi?api_key=${KEY}&query=${q}`)
-            .then((r) => r.json())
-            .then((d) => {
-                d.results.forEach((m) => {
-                    if (m.poster_path || m.profile_path) {
-                        const type = m.media_type;
-                        if (type === "person") {
-                             const el = createPosterElement(m, type);
-                             el.style.margin = "10px";
-                             el.onclick = () => openPerson(m.id);
-                             document.getElementById("res").appendChild(el);
-                        } else if (type === "movie" || type === "tv") {
-                            const el = createPosterElement(m, type);
-                            el.style.margin = "10px";
-                            document.getElementById("res").appendChild(el);
-                        }
-                    }
-                });
-            });
-    } else if (q.length === 0) {
+// --- SEARCH --------------------------------------------------------------
+// Case-insensitive and typo-tolerant. TMDB's own search handles case, but not
+// misspellings ("avngers", "intersteller"), so when it comes back empty or weak
+// we fuzzy-match against a cached index of popular titles and search again
+// with the corrected title.
+
+const SEARCH_INDEX_KEY = 'search_index_v2';
+const SEARCH_INDEX_TTL = 24 * 60 * 60 * 1000;
+let searchIndex = null;
+let searchIndexPromise = null;
+let searchSeq = 0;
+let searchTimer = null;
+
+function normalizeText(str) {
+    return (str || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/&/g, ' and ')
+        .replace(/[^a-z0-9 ]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+// Optimal string alignment distance (Levenshtein + adjacent swaps).
+function editDistance(a, b) {
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    let prev2 = null;
+    let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+        const cur = [i];
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            let v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+            if (prev2 && i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+                v = Math.min(v, prev2[j - 2] + 1);
+            }
+            cur.push(v);
+        }
+        prev2 = prev;
+        prev = cur;
+    }
+    return prev[b.length];
+}
+
+// 0..1, how well a (normalized) query matches a (normalized) title.
+function titleSimilarity(q, title) {
+    if (!q || !title) return 0;
+    if (title === q) return 1;
+    // Spacing differences: "ironman" vs "iron man", "spiderman" vs "spider man".
+    const qc = q.replace(/ /g, '');
+    const tc = title.replace(/ /g, '');
+    if (tc === qc) return 0.98;
+    if (title.startsWith(q) || (' ' + title).includes(' ' + q) || tc.startsWith(qc)) return 0.95;
+    const whole = 1 - editDistance(q, title) / Math.max(q.length, title.length);
+    // The user may have typed only the start of a long title.
+    let prefix = 0;
+    for (let len = q.length - 1; len <= q.length + 1; len++) {
+        if (len < 3 || len > title.length) continue;
+        const d = editDistance(q, title.slice(0, len));
+        prefix = Math.max(prefix, 1 - d / Math.max(q.length, len));
+    }
+    // Word by word, so "dark knigt" still finds "The Dark Knight".
+    const qWords = q.split(' ');
+    const tWords = title.split(' ');
+    let words = 0;
+    if (qWords.length > 1 || tWords.length > 1) {
+        let sum = 0;
+        for (const w of qWords) {
+            let best = 0;
+            for (const t of tWords) {
+                best = Math.max(best, 1 - editDistance(w, t) / Math.max(w.length, t.length));
+            }
+            sum += best;
+        }
+        words = (sum / qWords.length) * 0.92;
+    }
+    return Math.max(whole, prefix * 0.97, words);
+}
+
+function bestSimilarity(q, item) {
+    const names = [item.title, item.name, item.original_title, item.original_name];
+    let best = 0;
+    for (const n of names) if (n) best = Math.max(best, titleSimilarity(q, normalizeText(n)));
+    return best;
+}
+
+function loadSearchIndex() {
+    if (searchIndex) return Promise.resolve(searchIndex);
+    if (searchIndexPromise) return searchIndexPromise;
+    try {
+        const cached = JSON.parse(localStorage.getItem(SEARCH_INDEX_KEY) || 'null');
+        if (cached && Date.now() - cached.t < SEARCH_INDEX_TTL && cached.items.length) {
+            searchIndex = cached.items;
+            return Promise.resolve(searchIndex);
+        }
+    } catch (e) {}
+
+    const sources = [];
+    for (let page = 1; page <= 10; page++) {
+        sources.push(['movie', `/movie/popular?page=${page}`]);
+        sources.push(['tv', `/tv/popular?page=${page}`]);
+    }
+    for (let page = 1; page <= 5; page++) {
+        sources.push(['movie', `/movie/top_rated?page=${page}`]);
+        sources.push(['tv', `/tv/top_rated?page=${page}`]);
+    }
+    // Hindi titles have many English spellings ("Pathan" / "Pathaan").
+    for (let page = 1; page <= 5; page++) {
+        sources.push(['movie', `/discover/movie?with_original_language=hi&sort_by=vote_count.desc&page=${page}`]);
+    }
+    searchIndexPromise = Promise.all(sources.map(([type, path]) =>
+        fetch(`${BASE}${path}&api_key=${KEY}`)
+            .then(r => r.json())
+            .then(d => (d.results || []).map(m => ({
+                n: m.title || m.name,
+                o: m.original_title || m.original_name,
+                t: type,
+                p: m.popularity || 0,
+            })))
+            .catch(() => [])
+    )).then(lists => {
+        const seen = new Set();
+        const items = [];
+        lists.flat().forEach(it => {
+            const key = it.t + ':' + normalizeText(it.n);
+            if (it.n && !seen.has(key)) { seen.add(key); items.push(it); }
+        });
+        searchIndex = items;
+        try { localStorage.setItem(SEARCH_INDEX_KEY, JSON.stringify({ t: Date.now(), items })); } catch (e) {}
+        return items;
+    }).finally(() => { searchIndexPromise = null; });
+    return searchIndexPromise;
+}
+
+async function suggestTitle(q) {
+    const index = await loadSearchIndex();
+    let best = null;
+    for (const it of index) {
+        const score = Math.max(
+            titleSimilarity(q, normalizeText(it.n)),
+            it.o ? titleSimilarity(q, normalizeText(it.o)) : 0
+        );
+        // Prefer the more popular title when two match about as well.
+        const ranked = score + Math.min(it.p, 500) / 50000;
+        if (!best || ranked > best.ranked) best = { ...it, score, ranked };
+    }
+    return best && best.score >= 0.6 ? best : null;
+}
+
+// Fix only the words the user typed, using the matched title's spelling:
+// "avngers" + "Avengers: Doomsday" -> "Avengers" (not the whole title).
+function correctWords(q, title) {
+    const tokens = title.split(/\s+/)
+        .map(t => ({ raw: t.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''), norm: normalizeText(t) }))
+        .filter(t => t.norm);
+    if (!tokens.length) return title;
+    return q.split(' ').map(w => {
+        let best = null;
+        for (const t of tokens) {
+            const sim = 1 - editDistance(w, t.norm) / Math.max(w.length, t.norm.length);
+            if (!best || sim > best.sim) best = { sim, raw: t.raw };
+        }
+        return best && best.sim >= 0.5 ? best.raw : w;
+    }).join(' ');
+}
+
+function keepSearchResult(m) {
+    return (m.media_type === 'movie' || m.media_type === 'tv' || m.media_type === 'person') &&
+        (m.poster_path || m.profile_path);
+}
+
+async function tmdbFetch(path, query, page = 1) {
+    const res = await fetch(`${BASE}${path}?api_key=${KEY}&include_adult=false&page=${page}&query=${encodeURIComponent(query)}`);
+    return (await res.json()).results || [];
+}
+
+// TMDB's mixed search buries exact titles behind popular series
+// ("welcome" -> 20 "Welcome to…" shows before Welcome (2007)), so also ask the
+// movie and TV searches directly and read a second page.
+async function tmdbSearch(query) {
+    const [multi1, movies, shows, multi2] = await Promise.all([
+        tmdbFetch('/search/multi', query, 1),
+        tmdbFetch('/search/movie', query, 1).then(r => r.map(m => ({ ...m, media_type: 'movie' }))),
+        tmdbFetch('/search/tv', query, 1).then(r => r.map(m => ({ ...m, media_type: 'tv' }))),
+        tmdbFetch('/search/multi', query, 2).catch(() => []),
+    ]);
+    const seen = new Set();
+    return [...multi1, ...movies, ...shows, ...multi2].filter(m => {
+        const key = m.media_type + ':' + m.id;
+        if (seen.has(key) || !keepSearchResult(m)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+
+function compactText(str) {
+    return normalizeText(str).replace(/ /g, '');
+}
+
+// "ironman" -> "iro nman", "iron man": TMDB treats a joined word as one token,
+// so try the likely splits and keep only titles that match with spaces removed.
+async function searchJoinedWords(q) {
+    if (q.includes(' ') || q.length < 5 || q.length > 16) return [];
+    const target = q.replace(/ /g, '');
+    const splits = [];
+    for (let i = 3; i <= q.length - 3; i++) splits.push(q.slice(0, i) + ' ' + q.slice(i));
+    const lists = await Promise.all(splits.map(v =>
+        tmdbFetch('/search/multi', v, 1).catch(() => [])
+    ));
+    return lists.flat().filter(m => {
+        if (!keepSearchResult(m) || m.media_type === 'person') return false;
+        const c = compactText(m.title || m.name);
+        return c === target || c.startsWith(target);
+    });
+}
+
+function mergeResults(first, rest) {
+    const seen = new Set(first.map(m => m.media_type + ':' + m.id));
+    return first.concat(rest.filter(m => !seen.has(m.media_type + ':' + m.id)));
+}
+
+// Visitors in India get a small boost for Indian-language titles, so close
+// ties like "Welcome" (2007, Hindi) vs "Welcome" (2009, French) go their way.
+const LOCAL_LANGUAGES = (() => {
+    const langs = navigator.languages || [navigator.language || ''];
+    let tz = '';
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+    const inIndia = langs.some(l => /-IN$/i.test(l)) || /^Asia\/(Kolkata|Calcutta)$/.test(tz);
+    return new Set(inIndia ? ['hi', 'ta', 'te', 'ml', 'kn', 'bn', 'mr', 'pa', 'gu'] : []);
+})();
+
+// Order: titles named exactly like the query or starting with it, ranked by
+// how well-known they are (votes + popularity, exact names get a boost), then
+// close fuzzy matches, then everything else in TMDB's relevance order.
+function rankResults(results, query) {
+    // Ignore a leading article so "godfather" matches "The Godfather".
+    const dropArticle = (t) => t.replace(/^(the|a|an) /, '');
+    const q = dropArticle(normalizeText(query));
+    const qc = q.replace(/ /g, '');
+    const scoreOf = (m) => {
+        const names = [m.title, m.name, m.original_title, m.original_name].filter(Boolean);
+        let match = 0; // 2 exact, 1 starts with
+        let close = false;
+        for (const n of names) {
+            const t = dropArticle(normalizeText(n));
+            const tc = t.replace(/ /g, '');
+            if (t === q || tc === qc) match = 2;
+            else if (t.startsWith(q) || tc.startsWith(qc)) match = Math.max(match, 1);
+            else if (titleSimilarity(q, t) >= 0.9) close = true;
+        }
+        if (m.media_type === 'person') match = Math.min(match, 1);
+        const fame = Math.log1p(m.vote_count || 0) + Math.log1p(m.popularity || 0);
+        const local = LOCAL_LANGUAGES.has(m.original_language) ? 1 : 0;
+        return { group: match ? 2 : close ? 1 : 0, score: fame + local + (match === 2 ? 4 : 0) };
+    };
+    return results
+        .map((m, i) => ({ m, i, ...scoreOf(m) }))
+        .sort((a, b) => (b.group - a.group) || (a.group === 2 ? b.score - a.score : a.i - b.i))
+        .map(x => x.m);
+}
+
+function renderSearchShell(raw) {
+    const container = document.getElementById('main-content');
+    if (!document.getElementById('search-results')) {
+        gridState.active = false;
+        container.style.marginTop = '80px';
+        document.getElementById('hero').style.display = 'none';
+        container.innerHTML = `
+            <section class="search-page category-row">
+                <div class="search-head">
+                    <h2 id="search-heading">Results</h2>
+                    <p id="search-note" class="search-note" hidden></p>
+                </div>
+                <div class="row-posters" id="search-results" style="flex-wrap:wrap; overflow:visible"></div>
+            </section>`;
+    }
+    document.getElementById('search-heading').textContent = `Results for “${raw}”`;
+}
+
+function renderSearchState(kind, text) {
+    const grid = document.getElementById('search-results');
+    if (!grid) return;
+    grid.innerHTML = kind === 'loading'
+        ? '<div class="search-empty"><div class="player-spinner"></div></div>'
+        : `<div class="search-empty"><i class="fas fa-magnifying-glass"></i><p>${text}</p></div>`;
+}
+
+function renderSearchResults(items) {
+    const grid = document.getElementById('search-results');
+    grid.innerHTML = '';
+    items.forEach(m => {
+        const el = createPosterElement(m, m.media_type);
+        el.style.margin = '10px';
+        grid.appendChild(el);
+    });
+}
+
+function setSearchNote(html) {
+    const note = document.getElementById('search-note');
+    if (!note) return;
+    note.hidden = !html;
+    note.innerHTML = html || '';
+}
+
+async function runSearch(raw, { exact = false } = {}) {
+    const seq = ++searchSeq;
+    const q = normalizeText(raw);
+    if (q.length < 2) return;
+
+    document.title = `MovieDeck - Search: ${raw}`;
+    renderSearchShell(raw);
+    renderSearchState('loading');
+    setSearchNote('');
+    loadSearchIndex(); // warm up in the background
+
+    try {
+        const [direct, joined] = await Promise.all([
+            tmdbSearch(raw.trim()),
+            exact ? [] : searchJoinedWords(q),
+        ]);
+        if (seq !== searchSeq) return;
+        let results = mergeResults(joined, direct);
+
+        const topScore = results.length ? Math.max(...results.slice(0, 5).map(m => bestSimilarity(q, m))) : 0;
+        let corrected = null;
+
+        if (!exact && (results.length === 0 || topScore < 0.7)) {
+            const suggestion = await suggestTitle(q);
+            if (seq !== searchSeq) return;
+            const fixedQuery = suggestion ? correctWords(q, suggestion.n) : null;
+            if (fixedQuery && normalizeText(fixedQuery) !== q) {
+                const fixed = await tmdbSearch(fixedQuery);
+                if (seq !== searchSeq) return;
+                if (fixed.length) {
+                    corrected = fixedQuery;
+                    results = mergeResults(fixed, results);
+                }
+            }
+        }
+
+        results = rankResults(results, corrected || raw);
+
+        // A close spelling of a well-known title that TMDB missed
+        // ("pathan" -> "Pathaan"): show it first.
+        let alsoShowing = null;
+        if (!exact && !corrected && q.length >= 5) {
+            const suggestion = await suggestTitle(q);
+            if (seq !== searchSeq) return;
+            const target = suggestion && compactText(suggestion.n);
+            const qc = q.replace(/ /g, '');
+            // Only for real misspellings, not titles that already contain the query.
+            if (suggestion && suggestion.score >= 0.85 && !target.includes(qc)) {
+                const isHit = m => compactText(m.title || m.name) === target;
+                let hits = results.filter(isHit);
+                if (!hits.length) {
+                    hits = (await tmdbSearch(suggestion.n)).filter(isHit);
+                    if (seq !== searchSeq) return;
+                }
+                if (hits.length) {
+                    alsoShowing = suggestion.n;
+                    results = mergeResults(rankResults(hits, suggestion.n), results);
+                }
+            }
+        }
+        if (alsoShowing) {
+            setSearchNote(`Also showing <strong>${escapeHtml(alsoShowing)}</strong>.`);
+        }
+
+        if (corrected) {
+            document.getElementById('search-heading').textContent = `Results for “${corrected}”`;
+            setSearchNote(`Showing results for <strong>${escapeHtml(corrected)}</strong>. <button class="link-btn" onclick="searchExactly()">Search for “${escapeHtml(raw.trim())}” instead</button>`);
+        }
+
+        if (results.length) renderSearchResults(results);
+        else renderSearchState('empty', `No matches for “${escapeHtml(raw.trim())}”. Try a shorter title or check the spelling.`);
+    } catch (e) {
+        if (seq === searchSeq) renderSearchState('empty', 'Search is unavailable right now. Check your connection and try again.');
+    }
+}
+
+function searchExactly() {
+    runSearch(document.getElementById('search-input').value, { exact: true });
+}
+
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+const searchInputEl = document.getElementById('search-input');
+searchInputEl.addEventListener('focus', () => loadSearchIndex());
+searchInputEl.addEventListener('input', (e) => {
+    const raw = e.target.value;
+    clearTimeout(searchTimer);
+    if (normalizeText(raw).length >= 2) {
+        searchTimer = setTimeout(() => runSearch(raw), 300);
+    } else if (raw.trim().length === 0) {
+        searchSeq++;
         init();
-        document.getElementById("hero").style.display = "flex";
+        document.getElementById('hero').style.display = 'flex';
+    }
+});
+searchInputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        clearTimeout(searchTimer);
+        runSearch(e.target.value);
+    } else if (e.key === 'Escape') {
+        toggleSearch();
     }
 });
 
@@ -801,8 +1179,8 @@ const SERVERS = [
     {
         key: 'vidfast',
         host: 'VidFast',
-        movie: (id) => `https://vidfast.vc/movie/${id}?autoPlay=true&theme=ff007f`,
-        tv: (id, s, e) => `https://vidfast.vc/tv/${id}/${s}/${e}?autoPlay=true&theme=ff007f`,
+        movie: (id) => `https://vidfast.vc/movie/${id}?autoPlay=true`,
+        tv: (id, s, e) => `https://vidfast.vc/tv/${id}/${s}/${e}?autoPlay=true`,
     },
     {
         key: 'vidlink',
@@ -1764,83 +2142,180 @@ function toggleRatings() {
 // ----------------------------------
 
 // ------ Surprise Me Logic ---------
-async function playRandom(forcedType = null) {
-    const dice = document.querySelector('.fa-dice');
-    if (dice) dice.classList.add('fa-spin');
-    
+// TMDB uses different genre ids for movies and series; null = not available.
+const SURPRISE_GENRES = [
+    { name: 'Action', movie: 28, tv: 10759 },
+    { name: 'Adventure', movie: 12, tv: 10759 },
+    { name: 'Comedy', movie: 35, tv: 35 },
+    { name: 'Drama', movie: 18, tv: 18 },
+    { name: 'Thriller', movie: 53, tv: null },
+    { name: 'Crime', movie: 80, tv: 80 },
+    { name: 'Mystery', movie: 9648, tv: 9648 },
+    { name: 'Horror', movie: 27, tv: null },
+    { name: 'Sci-Fi', movie: 878, tv: 10765 },
+    { name: 'Fantasy', movie: 14, tv: 10765 },
+    { name: 'Romance', movie: 10749, tv: null },
+    { name: 'Animation', movie: 16, tv: 16 },
+    { name: 'Family', movie: 10751, tv: 10751 },
+    { name: 'Documentary', movie: 99, tv: 99 },
+    { name: 'War', movie: 10752, tv: 10768 },
+];
+const SURPRISE_PREF_KEY = 'surprise_prefs';
+
+let surprisePrefs = (() => {
+    try {
+        const p = JSON.parse(localStorage.getItem(SURPRISE_PREF_KEY) || 'null');
+        if (p && ['any', 'movie', 'tv'].includes(p.type) && Array.isArray(p.genres)) return p;
+    } catch (e) {}
+    return { type: 'any', genres: [] };
+})();
+
+function saveSurprisePrefs() {
+    try { localStorage.setItem(SURPRISE_PREF_KEY, JSON.stringify(surprisePrefs)); } catch (e) {}
+}
+
+function genreAvailable(g, type) {
+    return type === 'any' ? true : g[type] !== null;
+}
+
+function renderSurprisePanel() {
+    const { type, genres } = surprisePrefs;
+    document.querySelectorAll('.sp-segment button').forEach(btn => {
+        const on = btn.dataset.type === type;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-checked', String(on));
+    });
+    const chips = document.getElementById('sp-chips');
+    chips.innerHTML = SURPRISE_GENRES.map(g => {
+        const available = genreAvailable(g, type);
+        const on = genres.includes(g.name) && available;
+        return `<button type="button" class="sp-chip${on ? ' is-active' : ''}" aria-pressed="${on}"
+            ${available ? '' : 'disabled title="Not available for series"'}
+            onclick="toggleSurpriseGenre('${g.name}')">${g.name}</button>`;
+    }).join('');
+    document.getElementById('sp-clear').hidden = genres.length === 0;
+}
+
+function setSurpriseType(type) {
+    surprisePrefs.type = type;
+    saveSurprisePrefs();
+    renderSurprisePanel();
+}
+
+function toggleSurpriseGenre(name) {
+    const i = surprisePrefs.genres.indexOf(name);
+    if (i === -1) surprisePrefs.genres.push(name);
+    else surprisePrefs.genres.splice(i, 1);
+    saveSurprisePrefs();
+    renderSurprisePanel();
+}
+
+function clearSurpriseGenres() {
+    surprisePrefs.genres = [];
+    saveSurprisePrefs();
+    renderSurprisePanel();
+}
+
+function startSurprise() {
+    const { type, genres } = surprisePrefs;
+    // Use only the genres shown as selected (greyed-out ones don't apply).
+    const active = genres.filter(name => {
+        const g = SURPRISE_GENRES.find(x => x.name === name);
+        return g && genreAvailable(g, type);
+    });
+    toggleSurprise();
+    playRandom(type === 'any' ? null : type, active);
+}
+
+function discoverUrl(type, genreNames, page) {
+    const ids = SURPRISE_GENRES
+        .filter(g => genreNames.includes(g.name) && g[type] !== null)
+        .map(g => g[type]);
+    const unique = [...new Set(ids)];
+    const params = new URLSearchParams({
+        api_key: KEY,
+        sort_by: 'popularity.desc',
+        'vote_average.gte': '7',
+        'vote_count.gte': '300',
+        include_adult: 'false',
+        page: String(page),
+    });
+    if (unique.length) params.set('with_genres', unique.join('|')); // any of the picked genres
+    return `${BASE}/discover/${type}?${params}`;
+}
+
+async function pickRandomTitle(forcedType, genreNames) {
+    let types = forcedType ? [forcedType] : ['movie', 'tv'];
+    // Drop a type when none of the picked genres exist for it (e.g. Horror series).
+    if (genreNames.length) {
+        types = types.filter(t => SURPRISE_GENRES.some(g => genreNames.includes(g.name) && g[t] !== null));
+    }
+    if (!types.length) return null;
+    const type = types[Math.floor(Math.random() * types.length)];
+
+    const first = await (await fetch(discoverUrl(type, genreNames, 1))).json();
+    const totalPages = Math.min(first.total_pages || 1, 20);
+    const page = Math.floor(Math.random() * totalPages) + 1;
+    const data = page === 1 ? first : await (await fetch(discoverUrl(type, genreNames, page))).json();
+    const pool = (data.results || []).filter(m => m.poster_path);
+    if (!pool.length) return null;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    pick.media_type = type;
+    return pick;
+}
+
+async function playRandom(forcedType = null, genreNames = []) {
     const overlay = document.getElementById('surprise-overlay');
     const inner = document.getElementById('surprise-inner');
     const img = document.getElementById('surprise-img');
     const text = document.getElementById('surprise-text');
-    
+
     img.style.opacity = 0;
     inner.style.transition = 'none';
     inner.style.transform = 'rotateY(0deg)';
-    void inner.offsetWidth; // Force Reflow
-    
-    img.src = "";
-    text.innerText = "Get Ready!";
+    void inner.offsetWidth; // force reflow
+
+    img.src = '';
+    text.innerText = genreNames.length ? `Finding something ${genreNames.slice(0, 2).join(' / ')}…` : 'Get ready!';
     overlay.classList.add('show');
-    
+
     inner.style.transition = 'transform 3.5s cubic-bezier(0.1, 0.9, 0.2, 1)';
     inner.style.transform = 'rotateY(3600deg)';
-    
-    try {
-        const type = forcedType ? forcedType : (Math.random() > 0.5 ? 'movie' : 'tv');
-        
-        const randomPage = Math.floor(Math.random() * 20) + 1;
-        const url = `${BASE}/discover/${type}?api_key=${KEY}&vote_average.gte=8.0&vote_count.gte=300&page=${randomPage}&sort_by=popularity.desc`;
-        const res = await fetch(url);
-        const data = await res.json();
-        
-        if (data.results && data.results.length > 0) {
-            const randomMovie = data.results[Math.floor(Math.random() * data.results.length)];
-            randomMovie.media_type = type;
-            
-            const posterSrc = randomMovie.poster_path 
-                ? `${IMG}${randomMovie.poster_path}` 
-                : 'https://via.placeholder.com/300x450?text=MovieDeck';
-                
-            img.src = posterSrc;
-            
-            setTimeout(() => {
-                img.style.opacity = 1;
-                text.innerText = "You're watching:";
-                
-                inner.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
-                inner.style.transform = 'rotateY(3780deg)';
-                
-                if (window.confetti) {
-                    confetti({
-                        particleCount: 150,
-                        spread: 80,
-                        origin: { y: 0.6 },
-                        colors: ['#00f2ff', '#bd00ff', '#ffffff']
-                    });
-                }
-                
-                setTimeout(() => {
-                    overlay.classList.remove('show');
-                    openModal(randomMovie, type);
-                }, 3000);
-                
-            }, 3500);
 
-        } else {
+    try {
+        const pick = await pickRandomTitle(forcedType, genreNames);
+        if (!pick) {
             overlay.classList.remove('show');
-            alert('Could not discover a random movie. Please try again.');
+            showToast('Nothing found for that mix. Try fewer genres.');
+            return;
         }
+        img.src = `${IMG}${pick.poster_path}`;
+
+        setTimeout(() => {
+            img.style.opacity = 1;
+            text.innerText = pick.title || pick.name || "You're watching:";
+            inner.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            inner.style.transform = 'rotateY(3780deg)';
+
+            if (window.confetti) {
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: [getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#ff007f', '#ffffff'] });
+            }
+            setTimeout(() => {
+                overlay.classList.remove('show');
+                openModal(pick, pick.media_type);
+            }, 2200);
+        }, 3500);
     } catch (e) {
-        console.error("Surprise me error: ", e);
+        console.error('Surprise me error: ', e);
         overlay.classList.remove('show');
-        alert('Could not discover a random movie. Please check your connection.');
-    } finally {
-        if (dice) dice.classList.remove('fa-spin');
+        showToast('Could not reach the movie database. Check your connection.');
     }
 }
 
 function toggleProfile(e) {
     if (e) e.stopPropagation();
+    const surprisePanel = document.getElementById('surprise-dropdown');
+    if (surprisePanel) surprisePanel.classList.remove('show');
     const profileDropdown = document.querySelector('.profile-container .profile-dropdown');
     if (profileDropdown) {
         profileDropdown.classList.toggle('show');
@@ -1849,14 +2324,16 @@ function toggleProfile(e) {
 
 function toggleSurprise(e) {
     if (e) e.stopPropagation();
-    const dropdown = document.getElementById('surprise-dropdown');
-    if (dropdown) {
-        dropdown.classList.toggle('show');
-    }
+    const panel = document.getElementById('surprise-dropdown');
+    if (!panel) return;
+    const opening = !panel.classList.contains('show');
+    document.querySelectorAll('.profile-dropdown.show').forEach(d => d.classList.remove('show'));
+    if (opening) renderSurprisePanel();
+    panel.classList.toggle('show', opening);
 }
 
 document.addEventListener('click', function() {
-    const dropdowns = document.querySelectorAll('.profile-dropdown');
+    const dropdowns = document.querySelectorAll('.profile-dropdown, .surprise-panel');
     dropdowns.forEach(dropdown => {
         if (dropdown && dropdown.classList.contains('show')) {
             dropdown.classList.remove('show');
@@ -1864,3 +2341,7 @@ document.addEventListener('click', function() {
     });
 });
 // ----------------------------------
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.profile-dropdown.show, .surprise-panel.show').forEach(d => d.classList.remove('show'));
+});
