@@ -426,23 +426,58 @@ async function createRow(title, endpoint, forcedType = null) {
     }
 }
 
-function addToHistory(item, type) {
-    let hist = JSON.parse(
-        localStorage.getItem(getHistoryKey()) || "[]",
-    );
-    hist = hist.filter((i) => i.id !== item.id);
-    hist.unshift({
+function readHistory() {
+    try { return JSON.parse(localStorage.getItem(getHistoryKey()) || '[]'); } catch (e) { return []; }
+}
+
+function writeHistory(hist) {
+    try { localStorage.setItem(getHistoryKey(), JSON.stringify(hist.slice(0, 20))); } catch (e) {}
+}
+
+function getHistoryEntry(id) {
+    return readHistory().find(i => i.id === id) || null;
+}
+
+// Adds or refreshes a title at the front of history, keeping saved progress.
+function addToHistory(item, type, extra = {}) {
+    const hist = readHistory();
+    const old = hist.find(i => i.id === item.id) || {};
+    const entry = {
+        ...old,
         id: item.id,
-        poster_path: item.poster_path,
-        backdrop_path: item.backdrop_path,
-        title: item.title || item.name,
-        overview: item.overview,
-        release_date: item.release_date || item.first_air_date,
-        vote_average: item.vote_average,
-        media_type: type || "movie",
-    });
-    if (hist.length > 20) hist.pop();
-    localStorage.setItem(getHistoryKey(), JSON.stringify(hist));
+        poster_path: item.poster_path || old.poster_path,
+        backdrop_path: item.backdrop_path || old.backdrop_path,
+        title: item.title || item.name || old.title,
+        overview: item.overview || old.overview,
+        release_date: item.release_date || item.first_air_date || old.release_date,
+        vote_average: item.vote_average || old.vote_average,
+        media_type: type || old.media_type || 'movie',
+        updated: Date.now(),
+        ...extra,
+    };
+    writeHistory([entry, ...hist.filter(i => i.id !== item.id)]);
+}
+
+function removeFromHistory(id) {
+    writeHistory(readHistory().filter(i => i.id !== id));
+    loadRecentlyViewed();
+}
+
+function formatTime(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = String(sec % 60).padStart(2, '0');
+    return h ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
+}
+
+// Saved position for what's playing now, if it's worth resuming.
+function savedPosition(entry, type, season, episode) {
+    if (!entry) return null;
+    const p = type === 'tv' ? (entry.eps || {})[`s${season}e${episode}`] : entry.progress;
+    if (!p || p.done || !(p.d > 0)) return null;
+    if (p.t < 30 || p.t > p.d - 60) return null;
+    return p;
 }
 
 function loadRecentlyViewed() {
@@ -458,17 +493,57 @@ function loadRecentlyViewed() {
         container.appendChild(section);
     }
     const postersDiv = section.querySelector(".row-posters");
-    let hist = JSON.parse(
-        localStorage.getItem(getHistoryKey()) || "[]",
-    );
-    if (hist.length === 0) section.style.display = "none";
-    else {
-        section.style.display = "block";
-        hist.forEach((m) => {
-            let type = m.media_type || (m.title ? "movie" : "tv");
-            const el = createPosterElement(m, type);
-            postersDiv.appendChild(el);
-        });
+    // Finished movies and finished shows drop out of the row.
+    const hist = readHistory().filter(m => !m.done);
+    if (hist.length === 0) {
+        section.style.display = "none";
+        return;
+    }
+    section.style.display = "block";
+    hist.forEach((m) => {
+        const type = m.media_type || (m.title ? "movie" : "tv");
+        const el = createPosterElement(m, type);
+        el.classList.add('cw-card');
+        const img = el.querySelector('img');
+        img.onclick = () => resumeFromHistory(m.id);
+        img.title = 'Resume';
+
+        const p = type === 'tv' ? (m.eps || {})[`s${m.season}e${m.episode}`] : m.progress;
+        const pct = p && p.d > 0 ? Math.min(100, Math.round((p.t / p.d) * 100)) : 0;
+        const label = type === 'tv' && m.season
+            ? `S${m.season} · E${m.episode}`
+            : (p && p.d ? `${Math.max(1, Math.round((p.d - p.t) / 60))} min left` : '');
+
+        const meta = document.createElement('div');
+        meta.className = 'cw-meta';
+        meta.innerHTML = `
+            ${label ? `<span class="cw-label">${label}</span>` : ''}
+            <div class="cw-bar"><span style="width:${pct}%"></span></div>`;
+        meta.onclick = () => resumeFromHistory(m.id);
+        el.appendChild(meta);
+
+        const actions = document.createElement('div');
+        actions.className = 'cw-actions';
+        actions.innerHTML = `
+            <button type="button" class="cw-btn" title="Details" aria-label="Details"><i class="fas fa-info"></i></button>
+            <button type="button" class="cw-btn" title="Remove from Continue Watching" aria-label="Remove"><i class="fas fa-xmark"></i></button>`;
+        const [infoBtn, removeBtn] = actions.querySelectorAll('button');
+        infoBtn.onclick = (e) => { e.stopPropagation(); openModal(m, type); };
+        removeBtn.onclick = (e) => { e.stopPropagation(); removeFromHistory(m.id); };
+        el.appendChild(actions);
+
+        postersDiv.appendChild(el);
+    });
+}
+
+function resumeFromHistory(id) {
+    const m = getHistoryEntry(id);
+    if (!m) return;
+    if (m.media_type === 'tv' && m.season) {
+        playbackState.title = m.title;
+        playEpisode(m.id, m.season, m.episode);
+    } else {
+        playMedia(m);
     }
 }
 
@@ -620,6 +695,7 @@ async function openModal(m, forcedType = null) {
     document.getElementById("m-bg").style.backgroundImage =
         `url(${BACK}${m.backdrop_path})`;
     document.getElementById("m-title").innerText = m.title || m.name;
+    updateModalPlayLabel(m, type);
     document.getElementById("m-desc").innerText = m.overview;
     document.getElementById("m-date").innerText = (
         m.release_date ||
@@ -696,6 +772,50 @@ async function openModal(m, forcedType = null) {
     }
 }
 
+function updateModalPlayLabel(m, type) {
+    const label = document.getElementById('m-play-text');
+    if (!label) return;
+    const saved = getHistoryEntry(m.id);
+    // The detail part is hidden on small screens, where buttons are narrow.
+    if (type === 'tv' && saved && saved.season && !saved.done) {
+        label.innerHTML = `Resume<span class="play-detail"> S${saved.season} · E${saved.episode}</span>`;
+    } else if (type === 'movie' && savedPosition(saved, 'movie')) {
+        label.innerHTML = `Resume<span class="play-detail"> ${formatTime(saved.progress.t)}</span>`;
+    } else {
+        label.textContent = 'Play';
+    }
+    watchModalButtons();
+    requestAnimationFrame(fitModalButtons);
+}
+
+// Keep the popup's buttons on one line: icons-only for the secondary buttons
+// first, then a shorter Resume label, only as far as needed.
+function fitModalButtons() {
+    const row = document.querySelector('#modal .modal-buttons');
+    if (!row || !row.offsetParent) return;
+    row.classList.remove('is-compact', 'is-tight');
+    // Tooltips/labels so icon-only buttons still say what they do.
+    row.querySelectorAll('.btn').forEach(b => {
+        const t = b.querySelector('.btn-text');
+        if (t && !b.title) { b.title = t.textContent.trim(); b.setAttribute('aria-label', b.title); }
+    });
+    const overflows = () => row.scrollWidth > row.clientWidth + 1;
+    if (overflows()) row.classList.add('is-compact');
+    if (overflows()) row.classList.add('is-tight');
+}
+
+let modalButtonsObserver = null;
+function watchModalButtons() {
+    const row = document.querySelector('#modal .modal-buttons');
+    if (!row || modalButtonsObserver || !window.ResizeObserver) return;
+    let lastWidth = 0;
+    modalButtonsObserver = new ResizeObserver(entries => {
+        const w = Math.round(entries[0].contentRect.width);
+        if (w !== lastWidth) { lastWidth = w; fitModalButtons(); }
+    });
+    modalButtonsObserver.observe(row);
+}
+
 async function changeSeason(num) {
     const list = document.getElementById("episode-list");
     list.innerHTML =
@@ -711,6 +831,8 @@ async function changeSeason(num) {
             const div = document.createElement("div");
             div.className = "episode-row";
             div.onclick = () => playEpisode(window.currentTvId, num, ep.episode_number);
+            const saved = getHistoryEntry(window.currentTvId);
+            const prog = saved && saved.eps ? saved.eps[`s${num}e${ep.episode_number}`] : null;
             div.innerHTML = `
                 <div class="ep-index">${ep.episode_number}</div>
                 <div class="ep-thumb-container">
@@ -718,6 +840,7 @@ async function changeSeason(num) {
                     <div style="position:absolute; inset:0; display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.3);">
                         <i class="fas fa-play" style="color:white; opacity:0.8;"></i>
                     </div>
+                    ${prog ? `<div class="ep-progress${prog.done ? ' is-done' : ''}" title="${prog.done ? 'Watched' : formatTime(prog.t) + ' watched'}"><span style="width:${prog.done ? 100 : Math.min(100, Math.round(prog.t / prog.d * 100))}%"></span></div>` : ''}
                 </div>
                 <div class="ep-text">
                     <div class="ep-title">${ep.name}</div>
@@ -1181,12 +1304,16 @@ const SERVERS = [
         host: 'VidFast',
         movie: (id) => `https://vidfast.vc/movie/${id}?autoPlay=true`,
         tv: (id, s, e) => `https://vidfast.vc/tv/${id}/${s}/${e}?autoPlay=true`,
+        startAt: (url, t) => `${url}&startAt=${t}`,
+        reportsProgress: true,
     },
     {
         key: 'vidlink',
         host: 'VidLink',
         movie: (id) => `https://vidlink.pro/movie/${id}?autoplay=true&primaryColor=ff007f`,
         tv: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}?autoplay=true&primaryColor=ff007f`,
+        resumesItself: true, // VidLink remembers the position on its own
+        reportsProgress: true,
     },
     {
         key: 'xpass',
@@ -1243,10 +1370,17 @@ function serverIndex(key = playbackState.server) {
     return i === -1 ? 0 : i;
 }
 
+function currentResumePoint() {
+    const { type, id, season, episode } = playbackState;
+    return savedPosition(getHistoryEntry(id), type, season, episode);
+}
+
 function getEmbedUrl() {
     const { type, id, season, episode } = playbackState;
     const server = SERVERS[serverIndex()];
-    return type === 'movie' ? server.movie(id) : server.tv(id, season, episode);
+    const url = type === 'movie' ? server.movie(id) : server.tv(id, season, episode);
+    const resume = currentResumePoint();
+    return resume && server.startAt ? server.startAt(url, Math.floor(resume.t)) : url;
 }
 
 function renderServerMenu() {
@@ -1303,7 +1437,12 @@ let veilTimer = null;
 function showVeil() {
     const veil = document.getElementById('player-veil');
     const text = document.getElementById('player-veil-text');
-    if (text) text.textContent = `Connecting to Server ${serverIndex() + 1}…`;
+    const server = SERVERS[serverIndex()];
+    const resume = currentResumePoint();
+    const resuming = resume && (server.startAt || server.resumesItself);
+    if (text) text.textContent = resuming
+        ? `Resuming at ${formatTime(resume.t)} on Server ${serverIndex() + 1}…`
+        : `Connecting to Server ${serverIndex() + 1}…`;
     if (veil) veil.classList.remove('is-hidden');
 }
 
@@ -1383,7 +1522,16 @@ function openPlayer() {
 async function playMedia(item) {
     if (!item || !item.id) return;
     const type = item.media_type || (item.title ? 'movie' : 'tv');
-    addToHistory(item, type);
+    const saved = getHistoryEntry(item.id);
+
+    // Series: pick up at the episode you were on (or the next one).
+    if (type === 'tv' && saved && saved.season) {
+        playbackState.title = item.title || item.name || saved.title || '';
+        addToHistory(item, type);
+        return playEpisode(item.id, saved.season, saved.episode);
+    }
+    // A finished movie starts over.
+    addToHistory(item, type, type === 'movie' && saved && saved.done ? { done: false, progress: null } : {});
 
     playbackState = {
         ...playbackState,
@@ -1394,6 +1542,7 @@ async function playMedia(item) {
         title: item.title || item.name || '',
         seasons: null,
     };
+    if (type === 'tv') addToHistory(item, type, { season: 1, episode: 1, done: false });
     openPlayer();
 
     if (type === 'tv') {
@@ -1403,19 +1552,20 @@ async function playMedia(item) {
 }
 
 async function playEpisode(tvId, season, episode) {
-    if (currentModalItem && currentModalItem.id === tvId) {
-        addToHistory(currentModalItem, 'tv');
-    }
+    season = parseInt(season, 10);
+    episode = parseInt(episode, 10);
+    const known = (currentModalItem && currentModalItem.id === tvId) ? currentModalItem : getHistoryEntry(tvId);
+    if (known) addToHistory(known, 'tv', { season, episode, done: false });
     const sameShow = playbackState.id === tvId && playbackState.type === 'tv';
     playbackState = {
         ...playbackState,
         type: 'tv',
         id: tvId,
-        season: parseInt(season, 10),
-        episode: parseInt(episode, 10),
+        season,
+        episode,
         title: (currentModalItem && currentModalItem.id === tvId)
             ? (currentModalItem.name || currentModalItem.title || '')
-            : playbackState.title,
+            : (playbackState.id === tvId || !known ? playbackState.title : (known.title || known.name || '')),
         seasons: sameShow ? playbackState.seasons : null,
     };
     openPlayer();
@@ -1431,6 +1581,7 @@ function closeVideo() {
     const iframe = document.getElementById('video-frame');
     overlay.classList.remove('is-open');
     document.body.classList.remove('player-open');
+    if (document.getElementById('history-section')) loadRecentlyViewed();
     toggleServerMenu(false);
     clearTimeout(veilTimer);
     iframe.onload = null;
@@ -1461,6 +1612,7 @@ function nextEpisode() {
     } else {
         playbackState.episode++;
     }
+    rememberEpisode();
     updateVideoControls();
     updateIframeSource();
 }
@@ -1474,9 +1626,87 @@ function prevEpisode() {
     } else {
         return;
     }
+    rememberEpisode();
     updateVideoControls();
     updateIframeSource();
 }
+
+function rememberEpisode() {
+    const entry = getHistoryEntry(playbackState.id);
+    if (entry) addToHistory(entry, 'tv', { season: playbackState.season, episode: playbackState.episode, done: false });
+}
+
+// --- Watch progress -------------------------------------------------------
+// VidLink and VidFast post PLAYER_EVENT messages (currentTime, duration,
+// season, episode) to the page; we store them so Continue Watching can resume.
+const PROGRESS_ORIGINS = ['https://vidlink.pro', 'https://vidfast.vc'];
+let lastProgressSave = 0;
+
+function nextEpisodeAfter(season, episode) {
+    const seasons = playbackState.seasons;
+    if (!seasons || !seasons.length) return { season, episode: episode + 1 };
+    const cur = seasons.find(s => s.season_number === season);
+    if (cur && episode < cur.episode_count) return { season, episode: episode + 1 };
+    const later = seasons.filter(s => s.season_number > season && s.episode_count > 0)
+        .sort((a, b) => a.season_number - b.season_number)[0];
+    return later ? { season: later.season_number, episode: 1 } : null;
+}
+
+function saveProgress(t, dur, ended) {
+    const { type, id, season, episode } = playbackState;
+    const hist = readHistory();
+    const entry = hist.find(i => i.id === id);
+    if (!entry || !(dur > 0)) return;
+    const done = ended || t / dur >= 0.92;
+    const p = { t: Math.round(t), d: Math.round(dur), done };
+
+    if (type === 'movie') {
+        entry.progress = p;
+        entry.done = done;
+    } else {
+        entry.eps = entry.eps || {};
+        delete entry.eps[`s${season}e${episode}`];
+        entry.eps[`s${season}e${episode}`] = p;
+        const keys = Object.keys(entry.eps);
+        if (keys.length > 150) delete entry.eps[keys[0]];
+        entry.season = season;
+        entry.episode = episode;
+        entry.done = false;
+        if (done) {
+            // Point Continue Watching at the next episode.
+            const next = nextEpisodeAfter(season, episode);
+            if (next) { entry.season = next.season; entry.episode = next.episode; }
+            else entry.done = true;
+        }
+    }
+    entry.updated = Date.now();
+    writeHistory([entry, ...hist.filter(i => i !== entry)]);
+}
+
+window.addEventListener('message', (e) => {
+    if (!PROGRESS_ORIGINS.includes(e.origin)) return;
+    const msg = e.data;
+    if (!msg || msg.type !== 'PLAYER_EVENT' || !msg.data) return;
+    const d = msg.data;
+    const overlay = document.getElementById('video-overlay');
+    if (!overlay || !overlay.classList.contains('is-open')) return;
+    if (Number(d.tmdbId || d.mtmdbId) !== Number(playbackState.id)) return;
+
+    // The provider may move to the next episode by itself; follow it.
+    if (playbackState.type === 'tv' && d.season && d.episode &&
+        (Number(d.season) !== playbackState.season || Number(d.episode) !== playbackState.episode)) {
+        playbackState.season = Number(d.season);
+        playbackState.episode = Number(d.episode);
+        updateVideoControls();
+    }
+
+    const now = Date.now();
+    const important = d.event === 'pause' || d.event === 'ended' || d.event === 'seeked';
+    if (!important && now - lastProgressSave < 5000) return;
+    if (!(d.duration > 0) || !(d.currentTime >= 0)) return;
+    lastProgressSave = now;
+    saveProgress(Number(d.currentTime), Number(d.duration), d.event === 'ended');
+});
 
 function toggleMobileMenu() {
     const menu = document.getElementById("mobile-menu");
