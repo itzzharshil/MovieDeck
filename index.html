@@ -51,7 +51,7 @@
     <link rel="prefetch" href="https://api.themoviedb.org/3/trending/all/day?api_key=4803cc94c4172a32fc2851dda48d254f">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=block" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=block" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=26" />
+    <link rel="stylesheet" href="style.css?v=28" />
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/2503/2503508.png">
     <link rel="canonical" href="https://moviedeck.xyz" />
@@ -114,22 +114,20 @@
       </div>
       <div class="nav-right">
         <div class="search-container">
-          <i class="fas fa-search nav-icon" style="color: var(--primary);" onclick="toggleSearch()"></i>
+          <button type="button" class="nav-search-btn" onclick="toggleSearch()" aria-label="Search" title="Search (/)">
+            <i class="fas fa-search nav-icon" style="color: var(--primary);"></i>
+          </button>
           <input
             type="search"
             id="search-input"
             class="search-input"
             placeholder="Search movies and series"
             autocomplete="off"
-            role="combobox"
-            aria-autocomplete="list"
-            aria-expanded="false"
-            aria-controls="search-suggest"
             enterkeyhint="search"
+            aria-label="Search movies and series"
           />
-          <div id="search-suggest" class="search-suggest" role="listbox" aria-label="Search suggestions" hidden></div>
         </div>
-        
+
         <div class="surprise-container" style="position: relative; cursor: pointer;">
           <div class="surprise-box" onclick="toggleSurprise(event)" title="Surprise Me!">
             <i class="fas fa-dice nav-icon" style="color: var(--primary);"></i>
@@ -195,6 +193,7 @@
             <i class="fas fa-times" onclick="toggleMobileMenu()" style="font-size: 1.5rem; cursor: pointer;"></i>
         </div>
         <ul class="mobile-nav-links">
+            <li><a href="#" onclick="toggleMobileMenu(); openSearchPage();">Search</a></li>
             <li><a href="#home" onclick="loadContent('home'); toggleMobileMenu();">Home</a></li>
             <li><a href="#tv" onclick="loadContent('tv'); toggleMobileMenu();">TV Series</a></li>
             <li><a href="#movie" onclick="loadContent('movie'); toggleMobileMenu();">Movies</a></li>
@@ -460,6 +459,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
-    <script src="script.js?v=22" defer></script>
+    <script src="script.js?v=26" defer></script>
   </body>
 </html>

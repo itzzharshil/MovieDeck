@@ -25,7 +25,6 @@ const KEY = "4803cc94c4172a32fc2851dda48d254f";
 
 let modalZIndex = 5000;
 let currentModalItem = null;
-let searchActive = false;
 let heroInterval;
 
 const currentProfileId = 'user_default'; 
@@ -91,25 +90,42 @@ function init() {
     loadContent("home");
 }
 
+// The search icon expands the search box in the navbar and opens the Search
+// page (trending until you type). Clicking it again with an empty box closes
+// search and goes back home.
+let searchActive = false;
+
+function expandSearch(focus = true) {
+    const input = document.getElementById("search-input");
+    searchActive = true;
+    input.classList.add("active");
+    if (focus) input.focus({ preventScroll: true });
+}
+
+function collapseSearch() {
+    const input = document.getElementById("search-input");
+    searchActive = false;
+    input.classList.remove("active");
+    input.value = "";
+    input.blur();
+}
+
 function toggleSearch() {
     const input = document.getElementById("search-input");
-    searchActive = !searchActive;
-    if (searchActive) {
-        input.classList.add("active");
-        input.focus();
-    } else {
-        closeSuggest();
-        input.classList.remove("active");
-        input.value = "";
+    if (searchActive && !input.value.trim()) {
+        collapseSearch();
         loadContent("home");
+        return;
     }
+    openSearchPage();
 }
 
 function setActiveNav(id) {
     document
         .querySelectorAll(".nav-link")
         .forEach((b) => b.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
+    const el = id && document.getElementById(id);
+    if (el) el.classList.add("active");
 }
 
 // Recent South Indian releases (last two years, already out), so this row
@@ -127,6 +143,7 @@ let viewSeq = 0;
 
 async function loadContent(type) {
     const seq = ++viewSeq;
+    if (searchActive && type !== undefined) collapseSearch();
     clearSearchUrl();
     gridState.active = false;
     if (rowObserver) rowObserver.disconnect();
@@ -161,7 +178,7 @@ async function loadContent(type) {
         const rows = [];
         const add = (title, endpoint, rowType) => rows.push([title, endpoint, rowType]);
 
-        // Eight rows per page; every other genre is one tap away in Explore.
+        // About eight rows per page; every other genre is one tap away in Explore.
         if (type === "home") {
             add("Trending Now", "/trending/all/day");
             add("Bollywood", "/discover/movie?with_original_language=hi&sort_by=popularity.desc&vote_count.gte=50", "movie");
@@ -169,6 +186,7 @@ async function loadContent(type) {
             add("Pan-India Hits", "/discover/movie?with_original_language=ta|te|ml|kn&sort_by=popularity.desc&vote_count.gte=150", "movie");
             add("Popular Series", "/tv/popular", "tv");
             add("Action", genreRow('movie', 28), "movie");
+            add("Sci-Fi", genreRow('movie', 878), "movie");
             add("Comedy", genreRow('movie', 35), "movie");
             add("Horror", genreRow('movie', 27), "movie");
         } else if (type === "tv") {
@@ -684,6 +702,7 @@ function addToWishlistHero() {
 
 function loadWishlist() {
     viewSeq++;
+    if (searchActive) collapseSearch();
     clearSearchUrl();
     setActiveNav("nav-list");
     const container = document.getElementById("main-content");
@@ -989,7 +1008,8 @@ let firstRouteDone = false;
 
 function clearSearchUrl() {
     if (!firstRouteDone || routing) return;
-    if (new URLSearchParams(location.search).has('q')) setUrl({}, 'replace');
+    const p = new URLSearchParams(location.search);
+    if (p.has('q') || p.has('search')) setUrl({}, 'replace');
 }
 
 async function route() {
@@ -1018,11 +1038,11 @@ async function route() {
             const person = document.getElementById('person-modal');
             if (person && person.style.display === 'flex') person.style.display = 'none';
             const q = params.get('q');
-            const input = document.getElementById('search-input');
-            if (q && !(document.getElementById('search-results') && input.value === q)) {
-                if (!input.classList.contains('active')) toggleSearch();
-                input.value = q;
-                await runSearch(q);
+            if (q) {
+                const input = document.getElementById('search-input');
+                if (!(searchPageOpen() && input && input.value === q)) openSearchPage({ q, focus: false });
+            } else if (params.has('search')) {
+                if (!searchPageOpen()) openSearchPage({ focus: false });
             }
             return;
         }
@@ -1075,10 +1095,14 @@ function detailsOpen() {
 
 // Close the details popup. If we opened it with a history entry, step back
 // (the popstate router then hides it) so the back button and this stay in sync.
+// Runs once per close even though the ✕ click also reaches the backdrop
+// (both have close handlers): a second history.back() would leave the site.
 function closeDetails() {
-    if (history.state && history.state.layer === 'details') { history.back(); return; }
+    if (!detailsOpen()) return;
+    const pushed = history.state && history.state.layer === 'details';
     hideDetails();
-    setUrl({}, 'replace');
+    if (pushed) history.back();
+    else setUrl({}, 'replace');
 }
 
 function hideDetails() {
@@ -1086,11 +1110,7 @@ function hideDetails() {
         document.getElementById("modal").style.display = "none";
         document.body.style.overflow = "auto";
         document.title = "MovieDeck - Premium Streaming Experience";
-        const searchInput = document.getElementById("search-input");
-        if (
-            document.getElementById("nav-home").classList.contains("active") &&
-            (!searchInput.value || searchInput.value.length < 3)
-        ) {
+        if (document.getElementById("nav-home").classList.contains("active") && !searchPageOpen()) {
             loadRecentlyViewed();
         }
     }
@@ -1359,22 +1379,103 @@ function rankResults(results, query) {
         .map(x => x.m);
 }
 
-function renderSearchShell(raw) {
-    const container = document.getElementById('main-content');
-    if (!document.getElementById('search-results')) {
+// --- SEARCH PAGE -----------------------------------------------------------
+// Big search box at the top; before you type it shows what's trending,
+// while you type it shows results (same typo-tolerant engine).
+let searchTimer2 = null;
+
+function searchPageOpen() {
+    return !!document.getElementById('search-page');
+}
+
+function openSearchPage({ q = '', focus = true } = {}) {
+    expandSearch(focus);
+    if (!searchPageOpen()) {
         viewSeq++;
+        if (rowObserver) rowObserver.disconnect();
         gridState.active = false;
+        setActiveNav(null);
+        const container = document.getElementById('main-content');
         container.style.marginTop = '80px';
         document.getElementById('hero').style.display = 'none';
         container.innerHTML = `
-            <section class="search-page category-row">
-                <div class="search-head">
-                    <h2 id="search-heading">Results</h2>
-                    <p id="search-note" class="search-note" hidden></p>
+            <section class="search-page" id="search-page">
+                <div id="search-default"></div>
+                <div id="search-results-wrap" class="category-row" hidden>
+                    <div class="search-head">
+                        <h2 id="search-heading">Results</h2>
+                        <p id="search-note" class="search-note" hidden></p>
+                    </div>
+                    <div class="row-posters" id="search-results" style="flex-wrap:wrap; overflow:visible"></div>
                 </div>
-                <div class="row-posters" id="search-results" style="flex-wrap:wrap; overflow:visible"></div>
             </section>`;
+        const seq = viewSeq;
+        const defaults = document.getElementById('search-default');
+        // createRow appends to #main-content; build the rows there, then move them.
+        [
+            ['Trending Movies', '/trending/movie/week', 'movie'],
+            ['Trending Series', '/trending/tv/week', 'tv'],
+        ].forEach(([title, endpoint, type]) => {
+            createRow(title, endpoint, type);
+            if (seq !== viewSeq) return;
+            const row = container.lastElementChild;
+            if (row && row.classList.contains('category-row')) defaults.appendChild(row);
+        });
+        document.title = 'MovieDeck - Search';
+        window.scrollTo(0, 0);
     }
+    const input = document.getElementById('search-input');
+    if (q && (input.value !== q || document.getElementById('search-results-wrap').hidden)) {
+        input.value = q;
+        runSearch(q);
+    } else if (!q && !input.value.trim()) {
+        if (!routing) setUrl({ search: 1 }, 'replace');
+    }
+}
+
+function showSearchDefault() {
+    searchSeq++;
+    clearTimeout(searchTimer2);
+    if (!searchPageOpen()) return;
+    document.getElementById('search-default').hidden = false;
+    document.getElementById('search-results-wrap').hidden = true;
+    document.title = 'MovieDeck - Search';
+    setUrl({ search: 1 }, 'replace');
+}
+
+// Navbar search box: typing shows results on the Search page.
+(function bindSearchField() {
+    const input = document.getElementById('search-input');
+    input.addEventListener('focus', () => loadSearchIndex());
+    input.addEventListener('input', () => {
+        clearTimeout(searchTimer2);
+        const raw = input.value;
+        if (normalizeText(raw).length >= 2) {
+            if (!searchPageOpen()) openSearchPage({ focus: false });
+            searchTimer2 = setTimeout(() => runSearch(raw), 350);
+        } else if (!raw.trim()) {
+            showSearchDefault();
+        }
+    });
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(searchTimer2);
+            if (normalizeText(input.value).length >= 2) runSearch(input.value);
+            input.blur(); // closes the phone keyboard so results are visible
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            if (input.value) { input.value = ''; showSearchDefault(); }
+            else { collapseSearch(); loadContent('home'); }
+        }
+    });
+})();
+
+function renderSearchShell(raw) {
+    if (!searchPageOpen()) openSearchPage({ focus: false });
+    expandSearch(false);
+    document.getElementById('search-default').hidden = true;
+    document.getElementById('search-results-wrap').hidden = false;
     document.getElementById('search-heading').textContent = `Results for “${raw}”`;
 }
 
@@ -1470,8 +1571,6 @@ async function runSearch(raw, { exact = false } = {}) {
     const q = normalizeText(raw);
     if (q.length < 2) return;
 
-    closeSuggest();
-    saveRecentSearch(raw);
     document.title = `MovieDeck - Search: ${raw}`;
     if (!routing) setUrl({ q: raw.trim() }, 'replace');
     renderSearchShell(raw);
@@ -1499,144 +1598,6 @@ async function runSearch(raw, { exact = false } = {}) {
     }
 }
 
-// --- SEARCH SUGGESTIONS -----------------------------------------------------
-const RECENT_SEARCHES_KEY = 'recent_searches';
-let suggestSeq = 0;
-let suggestTimer = null;
-let suggestItems = [];   // what Enter / arrow keys act on
-let suggestIndex = -1;
-
-function getRecentSearches() {
-    try {
-        const list = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
-        return Array.isArray(list) ? list.filter(x => typeof x === 'string') : [];
-    } catch (e) { return []; }
-}
-
-function setRecentSearches(list) {
-    try { localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(list.slice(0, 8))); } catch (e) {}
-}
-
-function saveRecentSearch(raw) {
-    const q = String(raw || '').trim();
-    if (q.length < 2) return;
-    setRecentSearches([q, ...getRecentSearches().filter(x => x.toLowerCase() !== q.toLowerCase())]);
-}
-
-function removeRecentSearch(q) {
-    setRecentSearches(getRecentSearches().filter(x => x !== q));
-    renderRecentSearches();
-    document.getElementById('search-input').focus();
-}
-
-function clearRecentSearches() {
-    setRecentSearches([]);
-    closeSuggest();
-    document.getElementById('search-input').focus();
-}
-
-function suggestBox() { return document.getElementById('search-suggest'); }
-
-function openSuggest(html) {
-    const box = suggestBox();
-    box.innerHTML = html;
-    box.hidden = false;
-    suggestIndex = -1;
-    document.getElementById('search-input').setAttribute('aria-expanded', 'true');
-}
-
-function closeSuggest() {
-    const box = suggestBox();
-    if (!box) return;
-    box.hidden = true;
-    suggestIndex = -1;
-    suggestSeq++;
-    clearTimeout(suggestTimer);
-    document.getElementById('search-input').setAttribute('aria-expanded', 'false');
-}
-
-function renderRecentSearches() {
-    const list = getRecentSearches();
-    if (!list.length) { closeSuggest(); return; }
-    suggestItems = list.map(q => ({ kind: 'recent', q }));
-    openSuggest(`
-        <div class="ss-head"><span>Recent searches</span><button type="button" class="link-btn" onmousedown="event.preventDefault()" onclick="clearRecentSearches()">Clear</button></div>
-        ${list.map((q, i) => `
-            <div class="ss-item ss-recent" role="option" data-i="${i}" onmousedown="event.preventDefault()" onclick="pickSuggestion(${i})">
-                <i class="fas fa-clock-rotate-left ss-icon"></i>
-                <span class="ss-text">${escapeHtml(q)}</span>
-                <button type="button" class="ss-remove" aria-label="Remove ${escapeHtml(q)}" onmousedown="event.preventDefault()"
-                    onclick="event.stopPropagation(); removeRecentSearch(${escapeHtml(JSON.stringify(q))})"><i class="fas fa-xmark"></i></button>
-            </div>`).join('')}`);
-}
-
-function suggestionMeta(m) {
-    const kind = m.media_type === 'tv' ? 'Series' : 'Movie';
-    const date = m.release_date || m.first_air_date || '';
-    const up = releaseStatus(m);
-    return `${kind}${date ? ' · ' + date.slice(0, 4) : ''}${up ? ` <span class="ss-soon">${escapeHtml(up.short)}</span>` : ''}`;
-}
-
-async function updateSuggestions(raw) {
-    const seq = ++suggestSeq;
-    const q = normalizeText(raw);
-    if (q.length < 2) { renderRecentSearches(); return; }
-    if (suggestBox().hidden || !suggestItems.some(x => x.kind === 'title')) {
-        suggestItems = [];
-        openSuggest('<div class="ss-status"><div class="player-spinner"></div>Searching…</div>');
-    }
-    try {
-        const found = await findResults(raw, { light: true, isStale: () => seq !== suggestSeq });
-        if (!found || seq !== suggestSeq) return;
-        const top = found.results.filter(m => m.media_type !== 'person').slice(0, 5);
-        const label = found.corrected || raw.trim();
-        suggestItems = top.map(m => ({ kind: 'title', m })).concat({ kind: 'all', q: raw.trim() });
-        openSuggest(`
-            ${found.corrected ? `<div class="ss-head"><span>Showing ${escapeHtml(found.corrected)}</span></div>` : ''}
-            ${top.length ? '' : `<div class="ss-status">No titles match “${escapeHtml(raw.trim())}”</div>`}
-            ${top.map((m, i) => `
-                <div class="ss-item" role="option" data-i="${i}" onmousedown="event.preventDefault()" onclick="pickSuggestion(${i})">
-                    ${m.poster_path ? `<img class="ss-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="" loading="lazy">` : '<div class="ss-poster"></div>'}
-                    <span class="ss-body">
-                        <span class="ss-title">${escapeHtml(m.title || m.name)}</span>
-                        <span class="ss-meta">${suggestionMeta(m)}</span>
-                    </span>
-                </div>`).join('')}
-            <div class="ss-item ss-all" role="option" data-i="${top.length}" onmousedown="event.preventDefault()" onclick="pickSuggestion(${top.length})">
-                <i class="fas fa-magnifying-glass ss-icon"></i>
-                <span class="ss-text">See all results for “${escapeHtml(label)}”</span>
-                <i class="fas fa-arrow-right ss-go"></i>
-            </div>`);
-    } catch (e) {
-        if (seq === suggestSeq) closeSuggest();
-    }
-}
-
-function highlightSuggestion(i) {
-    const rows = [...suggestBox().querySelectorAll('.ss-item')];
-    if (!rows.length) return;
-    suggestIndex = (i + rows.length) % rows.length;
-    rows.forEach((r, n) => r.classList.toggle('is-active', n === suggestIndex));
-    rows[suggestIndex].scrollIntoView({ block: 'nearest' });
-}
-
-function pickSuggestion(i) {
-    const item = suggestItems[i];
-    const input = document.getElementById('search-input');
-    if (!item) return;
-    if (item.kind === 'title') {
-        saveRecentSearch(input.value);
-        closeSuggest();
-        input.blur();
-        openModal(item.m, item.m.media_type);
-    } else if (item.kind === 'recent') {
-        input.value = item.q;
-        runSearch(item.q);
-    } else {
-        runSearch(item.q);
-    }
-}
-
 function searchExactly() {
     runSearch(document.getElementById('search-input').value, { exact: true });
 }
@@ -1644,55 +1605,6 @@ function searchExactly() {
 function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-
-const searchInputEl = document.getElementById('search-input');
-searchInputEl.addEventListener('focus', () => {
-    loadSearchIndex();
-    if (normalizeText(searchInputEl.value).length >= 2) updateSuggestions(searchInputEl.value);
-    else renderRecentSearches();
-});
-searchInputEl.addEventListener('blur', () => setTimeout(() => {
-    if (document.activeElement !== searchInputEl) closeSuggest();
-}, 120));
-searchInputEl.addEventListener('input', (e) => {
-    const raw = e.target.value;
-    clearTimeout(suggestTimer);
-    if (normalizeText(raw).length >= 2) {
-        suggestTimer = setTimeout(() => updateSuggestions(raw), 200);
-    } else if (raw.trim().length === 0) {
-        searchSeq++;
-        renderRecentSearches();
-        if (document.getElementById('search-results')) {
-            setUrl({}, 'replace');
-            init();
-            document.getElementById('hero').style.display = 'flex';
-        }
-    } else {
-        renderRecentSearches();
-    }
-});
-searchInputEl.addEventListener('keydown', (e) => {
-    const open = !suggestBox().hidden;
-    if (e.key === 'ArrowDown' && open) {
-        e.preventDefault();
-        highlightSuggestion(suggestIndex + 1);
-    } else if (e.key === 'ArrowUp' && open) {
-        e.preventDefault();
-        highlightSuggestion(suggestIndex - 1);
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        clearTimeout(suggestTimer);
-        if (open && suggestIndex >= 0) pickSuggestion(suggestIndex);
-        else if (normalizeText(e.target.value).length >= 2) runSearch(e.target.value);
-    } else if (e.key === 'Escape') {
-        e.preventDefault();
-        if (open) closeSuggest();
-        else toggleSearch();
-    }
-});
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.search-container')) closeSuggest();
-});
 
 window.addEventListener("scroll", () => {
     const nav = document.getElementById("navbar");
@@ -2002,7 +1914,12 @@ async function playEpisode(tvId, season, episode) {
 
 // Close the player; like the popup, step back through history when we pushed it.
 function closeVideo() {
-    if (history.state && history.state.layer === 'player') { history.back(); return; }
+    if (!playerOpen()) return;
+    if (history.state && history.state.layer === 'player') {
+        closePlayerUI();
+        history.back();
+        return;
+    }
     closePlayerUI();
     setUrl(detailsOpen() && currentModalItem ? { [currentModalItem.media_type]: currentModalItem.id } : {}, 'replace',
         detailsOpen() ? { layer: 'details' } : {});
@@ -2165,6 +2082,7 @@ let exploreState = {
 
 async function loadExplore() {
     viewSeq++;
+    if (searchActive) collapseSearch();
     clearSearchUrl();
     setActiveNav("nav-explore");
     const container = document.getElementById("main-content");
@@ -2663,7 +2581,7 @@ function sharePlaying() {
 // --- BACKUP & RESTORE ------------------------------------------------------
 // Everything lives in this browser's storage; a backup file lets people keep
 // their watchlist and Continue Watching when they clear data or switch device.
-const BACKUP_SETTINGS = ['app_theme', 'show_ratings', 'preferred_server', 'surprise_prefs', 'recent_searches'];
+const BACKUP_SETTINGS = ['app_theme', 'show_ratings', 'preferred_server', 'surprise_prefs'];
 
 function readJsonKey(key, fallback) {
     try {
@@ -2788,8 +2706,7 @@ const legalContent = {
         title: "Keyboard shortcuts",
         body: `<table class="kbd-table">
                  <tr><td><kbd>/</kbd></td><td>Search</td></tr>
-                 <tr><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd></td><td>Pick a search suggestion</td></tr>
-                 <tr><td><kbd>Esc</kbd></td><td>Close the player, popup, menu or search</td></tr>
+                 <tr><td><kbd>Esc</kbd></td><td>Close the player, popup or menu</td></tr>
                  <tr><td><kbd>N</kbd></td><td>Next episode (in the player)</td></tr>
                  <tr><td><kbd>P</kbd></td><td>Previous episode (in the player)</td></tr>
                  <tr><td><kbd>?</kbd></td><td>Show this list</td></tr>
@@ -3174,7 +3091,7 @@ function closeTopmost() {
     if (isShown('trailer-overlay')) { closeTrailer(); return true; }
     if (isShown('person-modal')) { closePersonModal({ target: { id: 'person-modal' } }); return true; }
     if (detailsOpen()) { closeDetails(); return true; }
-    if (searchActive) { toggleSearch(); return true; }
+
     return false;
 }
 
@@ -3190,8 +3107,8 @@ document.addEventListener('keydown', (e) => {
     if (e.key === '/') {
         e.preventDefault();
         if (playerOpen()) closeVideo();
-        if (!searchActive) toggleSearch();
-        else document.getElementById('search-input').focus();
+        if (detailsOpen()) closeDetails();
+        openSearchPage();
     } else if ((e.key === 'n' || e.key === 'N') && playerOpen() && playbackState.type === 'tv') {
         e.preventDefault();
         if (!document.getElementById('btn-next-ep').disabled) {
