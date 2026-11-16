@@ -2965,3 +2965,188 @@ body.player-open { overflow: hidden; }
   .row-header { padding-right: 12px; }
   .see-all { font-size: 0.8rem; padding: 0 8px; }
 }
+
+/* Player: Share + New tab group on the right */
+.dock-end { gap: 4px; }
+@media (max-width: 640px) {
+  .player-dock .dock-end { grid-column: auto; justify-self: end; }
+  .player-dock .dock-end .dock-btn { flex: none; }
+}
+
+/* =========================================================
+   SEARCH SUGGESTIONS
+   ========================================================= */
+@media (min-width: 769px) {
+  .search-container { position: relative; }
+}
+.search-suggest {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 360px;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: var(--ui-radius, 14px);
+  background: var(--ui-surface, #17171f);
+  box-shadow: var(--ui-shadow, 0 16px 40px rgba(0,0,0,.55));
+  z-index: 2100;
+  font-size: 0.9rem;
+  transform-origin: top right;
+}
+.search-suggest:not([hidden]) {
+  animation: ss-in 160ms var(--ease-out);
+}
+@keyframes ss-in {
+  from { opacity: 0; transform: scale(0.97) translateY(-4px); }
+}
+.search-suggest[hidden] { display: none; }
+.ss-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ui-muted, #8b8b98);
+}
+.ss-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--text-main);
+}
+.ss-item.is-active { background: rgba(255, 255, 255, 0.08); }
+@media (hover: hover) and (pointer: fine) {
+  .ss-item:hover { background: rgba(255, 255, 255, 0.06); }
+}
+.ss-poster {
+  width: 34px;
+  height: 51px;
+  flex-shrink: 0;
+  border-radius: 5px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.06);
+}
+.ss-body { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.ss-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ss-meta { font-size: 0.78rem; color: var(--ui-muted, #8b8b98); }
+.ss-soon {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #ffd166;
+  background: rgba(255, 209, 102, 0.12);
+}
+.ss-icon { width: 34px; text-align: center; color: var(--ui-muted, #8b8b98); flex-shrink: 0; }
+.ss-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ss-all { border-top: 1px solid var(--ui-line, rgba(255,255,255,.08)); border-radius: 0 0 9px 9px; margin-top: 4px; }
+.ss-go { color: var(--ui-muted, #8b8b98); font-size: 0.75rem; }
+.ss-remove {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ui-muted, #8b8b98);
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ss-remove:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-main); }
+}
+.ss-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px;
+  color: var(--ui-muted, #8b8b98);
+}
+.ss-status .player-spinner { width: 16px; height: 16px; border-width: 2px; }
+@media (max-width: 768px) {
+  .search-suggest {
+    position: absolute;
+    top: 122px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: calc(100vh - 140px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .search-suggest:not([hidden]) { animation: none; }
+}
+.search-input::-webkit-search-cancel-button { filter: invert(1) opacity(0.5); cursor: pointer; }
+
+/* =========================================================
+   NOT OUT YET
+   ========================================================= */
+.soon-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffd166;
+  font-size: 0.7rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+.m-date-soon { color: #ffd166; font-weight: 600; }
+.modal-buttons .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+.episode-row.ep-upcoming { opacity: 0.55; cursor: default; }
+.ep-soon {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffd166;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   KEYBOARD SHORTCUTS LIST
+   ========================================================= */
+.kbd-table { width: 100%; border-collapse: collapse; }
+.kbd-table td { padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.kbd-table td:first-child { width: 45%; white-space: nowrap; }
+kbd {
+  display: inline-block;
+  min-width: 26px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.kbd-note { margin-top: 14px; font-size: 0.85rem; color: var(--ui-muted, #8b8b98); }
+
+/* Watchlist page: remove button (same look as Continue Watching buttons) */
+.wl-card { position: relative; }
+.wl-remove:hover { background: rgba(229, 57, 53, 0.9) !important; }
+/* Ratings badge sits below the card buttons instead of under them */
+.wl-card .poster-rating-badge,
+.cw-card .poster-rating-badge { top: 42px; right: 8px; }
+.wl-card .cw-actions { opacity: 1; }
+
+/* Search box and its dropdown share one width so their edges line up. */
+:root { --search-w: 320px; }
+@media (max-width: 1024px) { :root { --search-w: 260px; } }
+@media (min-width: 769px) {
+  .search-input.active { width: var(--search-w); }
+  .search-suggest {
+    left: auto;
+    right: 0;
+    width: var(--search-w);
+  }
+}

@@ -98,6 +98,7 @@ function toggleSearch() {
         input.classList.add("active");
         input.focus();
     } else {
+        closeSuggest();
         input.classList.remove("active");
         input.value = "";
         loadContent("home");
@@ -126,6 +127,7 @@ let viewSeq = 0;
 
 async function loadContent(type) {
     const seq = ++viewSeq;
+    clearSearchUrl();
     gridState.active = false;
     if (rowObserver) rowObserver.disconnect();
     const loader = document.getElementById("global-loader");
@@ -282,6 +284,28 @@ async function setupHeroSlideshow(endpoint) {
          heroTitle.innerText = "Error Loading";
     }
 }
+// --- "NOT OUT YET" ---------------------------------------------------------
+// A title (or episode) whose release date is still in the future can't be
+// streamed yet, so we label it and keep people from trying every server.
+function todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function formatReleaseDate(iso, withYear) {
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d)) return iso;
+    const sameYear = d.getFullYear() === new Date().getFullYear();
+    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', ...(withYear || !sameYear ? { year: 'numeric' } : {}) });
+}
+
+// Returns null if it's out, else { date, short: "Out 12 Dec", long: "Releases 12 Dec 2026" }.
+function releaseStatus(m, dateField) {
+    const date = dateField || (m && (m.release_date || m.first_air_date)) || '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date <= todayISO()) return null;
+    return { date, short: `Out ${formatReleaseDate(date)}`, long: `Releases ${formatReleaseDate(date, true)}` };
+}
+
 function createPosterElement(m, type, className = "poster-card") {
     const wrapper = document.createElement("div");
     wrapper.className = "poster-wrapper";
@@ -307,7 +331,7 @@ function createPosterElement(m, type, className = "poster-card") {
     
     wrapper.appendChild(img);
     
-    const list = JSON.parse(localStorage.getItem("wishlist") || "[]");
+    const list = readJsonKey(getWishlistKey(), []);
     if (list.find(i => i.id === m.id)) {
         const badge = document.createElement("div");
         badge.className = "list-badge";
@@ -315,6 +339,15 @@ function createPosterElement(m, type, className = "poster-card") {
         wrapper.appendChild(badge);
     }
     
+    const upcoming = type !== 'person' && releaseStatus(m);
+    if (upcoming) {
+        const badge = document.createElement("div");
+        badge.className = "soon-badge";
+        badge.textContent = upcoming.short;
+        badge.title = `${upcoming.long} – not streaming yet`;
+        wrapper.appendChild(badge);
+    }
+
     if (m.vote_average && localStorage.getItem('show_ratings') === 'true' && type !== 'person') {
         const ratingBadge = document.createElement("div");
         ratingBadge.className = "poster-rating-badge";
@@ -337,6 +370,7 @@ let gridState = {
 
 async function loadGrid(title, endpoint, type) {
     viewSeq++;
+    clearSearchUrl();
     const loader = document.getElementById("global-loader");
     if(loader) loader.classList.remove("hidden");
 
@@ -554,6 +588,8 @@ function loadRecentlyViewed() {
         const type = m.media_type || (m.title ? "movie" : "tv");
         const el = createPosterElement(m, type);
         el.classList.add('cw-card');
+        const tick = el.querySelector('.list-badge');
+        if (tick) tick.remove();
         const img = el.querySelector('img');
         img.onclick = () => resumeFromHistory(m.id);
         img.title = 'Resume';
@@ -648,6 +684,7 @@ function addToWishlistHero() {
 
 function loadWishlist() {
     viewSeq++;
+    clearSearchUrl();
     setActiveNav("nav-list");
     const container = document.getElementById("main-content");
     container.style.marginTop = "80px";
@@ -665,29 +702,26 @@ function loadWishlist() {
         el.style.margin = "10px";
         el.style.position = "relative";
         
-        const removeBtn = document.createElement("div");
-        removeBtn.innerHTML = "<i class='fas fa-minus'></i>";
-        removeBtn.style.position = "absolute";
-        removeBtn.style.top = "10px";
-        removeBtn.style.right = "10px";
-        removeBtn.style.width = "30px";
-        removeBtn.style.height = "30px";
-        removeBtn.style.background = "rgba(255, 0, 0, 0.8)";
-        removeBtn.style.color = "white";
-        removeBtn.style.borderRadius = "50%";
-        removeBtn.style.display = "flex";
-        removeBtn.style.justifyContent = "center";
-        removeBtn.style.alignItems = "center";
-        removeBtn.style.cursor = "pointer";
-        removeBtn.style.zIndex = "10";
-        removeBtn.title = "Remove from Watchlist";
-        
+        // Everything here is in the watchlist, so no tick; just a remove button.
+        el.classList.add('wl-card');
+        const badge = el.querySelector('.list-badge');
+        if (badge) badge.remove();
+
+        const actions = document.createElement('div');
+        actions.className = 'cw-actions';
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'cw-btn wl-remove';
+        removeBtn.title = 'Remove from Watchlist';
+        removeBtn.setAttribute('aria-label', `Remove ${m.title || m.name} from Watchlist`);
+        removeBtn.innerHTML = '<i class="fas fa-xmark"></i>';
         removeBtn.onclick = (e) => {
             e.stopPropagation();
             removeFromWishlist(m.id);
         };
-        
-        el.appendChild(removeBtn);
+        actions.appendChild(removeBtn);
+
+        el.appendChild(actions);
         row.appendChild(el);
     });
 }
@@ -735,6 +769,11 @@ async function openModal(m, forcedType = null) {
     }
     currentModalItem = m;
     currentModalItem.media_type = type;
+    if (!routing) {
+        const sameTitle = history.state && history.state.layer === 'details' &&
+            new URLSearchParams(location.search).get(type) === String(m.id);
+        setUrl({ [type]: m.id }, sameTitle ? 'replace' : 'push', { layer: 'details' });
+    }
     document.title = `${m.title || m.name} - MovieDeck`;
 
     const modal = document.getElementById("modal");
@@ -746,13 +785,13 @@ async function openModal(m, forcedType = null) {
     document.getElementById("m-bg").style.backgroundImage =
         `url(${BACK}${m.backdrop_path})`;
     document.getElementById("m-title").innerText = m.title || m.name;
-    updateModalPlayLabel(m, type);
     document.getElementById("m-desc").innerText = m.overview;
     document.getElementById("m-date").innerText = (
         m.release_date ||
         m.first_air_date ||
         ""
     ).substring(0, 4);
+    updateModalPlayLabel(m, type); // after the date: unreleased titles show the full date
     const vote = m.vote_average || 7;
     document.getElementById("m-imdb").innerText = `IMDb ${vote.toFixed(1)}`;
 
@@ -826,6 +865,21 @@ async function openModal(m, forcedType = null) {
 function updateModalPlayLabel(m, type) {
     const label = document.getElementById('m-play-text');
     if (!label) return;
+    const playBtn = label.parentElement;
+    const upcoming = releaseStatus(m);
+    playBtn.disabled = !!upcoming;
+    playBtn.title = upcoming ? `${upcoming.long} – not streaming yet` : '';
+    const dateEl = document.getElementById('m-date');
+    if (dateEl) {
+        dateEl.classList.toggle('m-date-soon', !!upcoming);
+        if (upcoming) dateEl.textContent = upcoming.long;
+    }
+    if (upcoming) {
+        label.textContent = 'Not out yet';
+        watchModalButtons();
+        requestAnimationFrame(fitModalButtons);
+        return;
+    }
     const saved = getHistoryEntry(m.id);
     // The detail part is hidden on small screens, where buttons are narrow.
     if (type === 'tv' && saved && saved.season && !saved.done) {
@@ -881,7 +935,11 @@ async function changeSeason(num) {
         data.episodes.forEach((ep) => {
             const div = document.createElement("div");
             div.className = "episode-row";
-            div.onclick = () => playEpisode(window.currentTvId, num, ep.episode_number);
+            const epSoon = releaseStatus(null, ep.air_date);
+            div.onclick = epSoon
+                ? () => showToast(`Episode ${ep.episode_number} isn't out yet. Airs ${formatReleaseDate(ep.air_date, true)}.`)
+                : () => playEpisode(window.currentTvId, num, ep.episode_number);
+            if (epSoon) div.classList.add('ep-upcoming');
             const saved = getHistoryEntry(window.currentTvId);
             const prog = saved && saved.eps ? saved.eps[`s${num}e${ep.episode_number}`] : null;
             div.innerHTML = `
@@ -897,7 +955,7 @@ async function changeSeason(num) {
                     <div class="ep-title">${ep.name}</div>
                     <div class="ep-desc">${ep.overview || "No description available."}</div>
                 </div>
-                <div class="ep-duration">${ep.runtime ? ep.runtime + "m" : ""}</div>
+                <div class="ep-duration">${epSoon ? `<span class="ep-soon">Airs ${formatReleaseDate(ep.air_date)}</span>` : (ep.runtime ? ep.runtime + "m" : "")}</div>
             `;
             list.appendChild(div);
         });
@@ -907,8 +965,124 @@ async function changeSeason(num) {
     }
 }
 
+// --- LINKS & BACK BUTTON ---------------------------------------------------
+// ?movie=ID / ?tv=ID           details popup
+// ?tv=ID&s=2&e=3               that episode in the player
+// ?movie=ID&play=1             the movie in the player
+// ?q=text                      search
+// #movie/ID                    old share links, still supported
+let routing = false;
+
+function setUrl(params, mode = 'replace', state = {}) {
+    const clean = {};
+    Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') clean[k] = v; });
+    const qs = new URLSearchParams(clean).toString();
+    const url = location.pathname + (qs ? `?${qs}` : '');
+    const same = url === location.pathname + location.search && !location.hash;
+    if (mode === 'push' && !same) history.pushState(state, '', url);
+    else history.replaceState(state, '', url);
+}
+
+// The homepage starts loading before the first route() reads the link, so
+// don't touch the URL until that first route has run.
+let firstRouteDone = false;
+
+function clearSearchUrl() {
+    if (!firstRouteDone || routing) return;
+    if (new URLSearchParams(location.search).has('q')) setUrl({}, 'replace');
+}
+
+async function route() {
+    routing = true;
+    try {
+        const params = new URLSearchParams(location.search);
+        let type = params.has('movie') ? 'movie' : params.has('tv') ? 'tv' : null;
+        let id = type ? parseInt(params.get(type), 10) : null;
+
+        // Old share links: #movie/123 or #tv/456
+        const legacy = location.hash.match(/^#(movie|tv)\/(\d+)/);
+        if (!type && legacy) {
+            type = legacy[1];
+            id = parseInt(legacy[2], 10);
+            history.replaceState({ layer: 'details' }, '', `${location.pathname}?${type}=${id}`);
+        }
+
+        const season = parseInt(params.get('s'), 10);
+        const episode = parseInt(params.get('e'), 10);
+        const wantPlayer = type === 'tv' ? season > 0 && episode > 0 : type === 'movie' && params.get('play') === '1';
+
+        if (!wantPlayer && playerOpen()) closePlayerUI();
+
+        if (!type || !id) {
+            if (detailsOpen()) hideDetails();
+            const person = document.getElementById('person-modal');
+            if (person && person.style.display === 'flex') person.style.display = 'none';
+            const q = params.get('q');
+            const input = document.getElementById('search-input');
+            if (q && !(document.getElementById('search-results') && input.value === q)) {
+                if (!input.classList.contains('active')) toggleSearch();
+                input.value = q;
+                await runSearch(q);
+            }
+            return;
+        }
+
+        if (!detailsOpen() || !currentModalItem || currentModalItem.id !== id || currentModalItem.media_type !== type) {
+            const res = await fetch(`${BASE}/${type}/${id}?api_key=${KEY}`);
+            const data = await res.json();
+            if (!data || data.success === false || !data.id) {
+                showToast("That title couldn't be found");
+                setUrl({}, 'replace');
+                return;
+            }
+            data.media_type = type;
+            await openModal(data, type);
+        }
+
+        if (wantPlayer) {
+            const same = playerOpen() && playbackState.id === id &&
+                (type === 'movie' || (playbackState.season === season && playbackState.episode === episode));
+            if (!same) {
+                if (type === 'tv') await playEpisode(id, season, episode);
+                else await playMedia(currentModalItem);
+            }
+        }
+    } catch (e) {
+        console.error('Could not open link', e);
+    } finally {
+        routing = false;
+        firstRouteDone = true;
+    }
+}
+
+window.addEventListener('popstate', () => { route(); });
+
+// Menu links use href="#" as a placeholder; don't let them touch the URL.
+document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href="#"]');
+    if (a) e.preventDefault();
+});
+
 function closeModal(e) {
     if (e.target.id === "modal" || e.target.closest(".modal-close")) {
+        closeDetails();
+    }
+}
+
+function detailsOpen() {
+    return document.getElementById("modal").style.display === "flex";
+}
+
+// Close the details popup. If we opened it with a history entry, step back
+// (the popstate router then hides it) so the back button and this stay in sync.
+function closeDetails() {
+    if (history.state && history.state.layer === 'details') { history.back(); return; }
+    hideDetails();
+    setUrl({}, 'replace');
+}
+
+function hideDetails() {
+    {
         document.getElementById("modal").style.display = "none";
         document.body.style.overflow = "auto";
         document.title = "MovieDeck - Premium Streaming Experience";
@@ -1103,12 +1277,12 @@ async function tmdbFetch(path, query, page = 1) {
 // TMDB's mixed search buries exact titles behind popular series
 // ("welcome" -> 20 "Welcome to…" shows before Welcome (2007)), so also ask the
 // movie and TV searches directly and read a second page.
-async function tmdbSearch(query) {
+async function tmdbSearch(query, { light = false } = {}) {
     const [multi1, movies, shows, multi2] = await Promise.all([
         tmdbFetch('/search/multi', query, 1),
         tmdbFetch('/search/movie', query, 1).then(r => r.map(m => ({ ...m, media_type: 'movie' }))),
         tmdbFetch('/search/tv', query, 1).then(r => r.map(m => ({ ...m, media_type: 'tv' }))),
-        tmdbFetch('/search/multi', query, 2).catch(() => []),
+        light ? [] : tmdbFetch('/search/multi', query, 2).catch(() => []),
     ]);
     const seen = new Set();
     return [...multi1, ...movies, ...shows, ...multi2].filter(m => {
@@ -1229,70 +1403,90 @@ function setSearchNote(html) {
     note.innerHTML = html || '';
 }
 
+// The search engine shared by the results page and the suggestions dropdown.
+// Returns null if a newer search started meanwhile (isStale).
+const searchCache = new Map();
+
+async function findResults(raw, { exact = false, light = false, isStale = () => false } = {}) {
+    const q = normalizeText(raw);
+    const cacheKey = `${exact ? 'x' : ''}${light ? 'l' : ''}:${q}`;
+    if (searchCache.has(cacheKey)) return searchCache.get(cacheKey);
+
+    const [direct, joined] = await Promise.all([
+        tmdbSearch(raw.trim(), { light }),
+        exact ? [] : searchJoinedWords(q),
+    ]);
+    if (isStale()) return null;
+    let results = mergeResults(joined, direct);
+
+    const topScore = results.length ? Math.max(...results.slice(0, 5).map(m => bestSimilarity(q, m))) : 0;
+    let corrected = null;
+    if (!exact && (results.length === 0 || topScore < 0.7)) {
+        const suggestion = await suggestTitle(q);
+        if (isStale()) return null;
+        const fixedQuery = suggestion ? correctWords(q, suggestion.n) : null;
+        if (fixedQuery && normalizeText(fixedQuery) !== q) {
+            const fixed = await tmdbSearch(fixedQuery, { light });
+            if (isStale()) return null;
+            if (fixed.length) {
+                corrected = fixedQuery;
+                results = mergeResults(fixed, results);
+            }
+        }
+    }
+    results = rankResults(results, corrected || raw);
+
+    // A close spelling of a well-known title that TMDB missed
+    // ("pathan" -> "Pathaan"): show it first.
+    let alsoShowing = null;
+    if (!exact && !corrected && q.length >= 5) {
+        const suggestion = await suggestTitle(q);
+        if (isStale()) return null;
+        const target = suggestion && compactText(suggestion.n);
+        const qc = q.replace(/ /g, '');
+        // Only for real misspellings, not titles that already contain the query.
+        if (suggestion && suggestion.score >= 0.85 && !target.includes(qc)) {
+            const isHit = m => compactText(m.title || m.name) === target;
+            let hits = results.filter(isHit);
+            if (!hits.length) {
+                hits = (await tmdbSearch(suggestion.n, { light })).filter(isHit);
+                if (isStale()) return null;
+            }
+            if (hits.length) {
+                alsoShowing = suggestion.n;
+                results = mergeResults(rankResults(hits, suggestion.n), results);
+            }
+        }
+    }
+
+    const out = { results, corrected, alsoShowing };
+    searchCache.set(cacheKey, out);
+    if (searchCache.size > 60) searchCache.delete(searchCache.keys().next().value);
+    return out;
+}
+
 async function runSearch(raw, { exact = false } = {}) {
     const seq = ++searchSeq;
     const q = normalizeText(raw);
     if (q.length < 2) return;
 
+    closeSuggest();
+    saveRecentSearch(raw);
     document.title = `MovieDeck - Search: ${raw}`;
+    if (!routing) setUrl({ q: raw.trim() }, 'replace');
     renderSearchShell(raw);
     renderSearchState('loading');
     setSearchNote('');
     loadSearchIndex(); // warm up in the background
 
     try {
-        const [direct, joined] = await Promise.all([
-            tmdbSearch(raw.trim()),
-            exact ? [] : searchJoinedWords(q),
-        ]);
-        if (seq !== searchSeq) return;
-        let results = mergeResults(joined, direct);
+        const found = await findResults(raw, { exact, isStale: () => seq !== searchSeq });
+        if (!found || seq !== searchSeq) return;
+        const { results, corrected, alsoShowing } = found;
 
-        const topScore = results.length ? Math.max(...results.slice(0, 5).map(m => bestSimilarity(q, m))) : 0;
-        let corrected = null;
-
-        if (!exact && (results.length === 0 || topScore < 0.7)) {
-            const suggestion = await suggestTitle(q);
-            if (seq !== searchSeq) return;
-            const fixedQuery = suggestion ? correctWords(q, suggestion.n) : null;
-            if (fixedQuery && normalizeText(fixedQuery) !== q) {
-                const fixed = await tmdbSearch(fixedQuery);
-                if (seq !== searchSeq) return;
-                if (fixed.length) {
-                    corrected = fixedQuery;
-                    results = mergeResults(fixed, results);
-                }
-            }
-        }
-
-        results = rankResults(results, corrected || raw);
-
-        // A close spelling of a well-known title that TMDB missed
-        // ("pathan" -> "Pathaan"): show it first.
-        let alsoShowing = null;
-        if (!exact && !corrected && q.length >= 5) {
-            const suggestion = await suggestTitle(q);
-            if (seq !== searchSeq) return;
-            const target = suggestion && compactText(suggestion.n);
-            const qc = q.replace(/ /g, '');
-            // Only for real misspellings, not titles that already contain the query.
-            if (suggestion && suggestion.score >= 0.85 && !target.includes(qc)) {
-                const isHit = m => compactText(m.title || m.name) === target;
-                let hits = results.filter(isHit);
-                if (!hits.length) {
-                    hits = (await tmdbSearch(suggestion.n)).filter(isHit);
-                    if (seq !== searchSeq) return;
-                }
-                if (hits.length) {
-                    alsoShowing = suggestion.n;
-                    results = mergeResults(rankResults(hits, suggestion.n), results);
-                }
-            }
-        }
         if (alsoShowing) {
             setSearchNote(`Also showing <strong>${escapeHtml(alsoShowing)}</strong>.`);
         }
-
         if (corrected) {
             document.getElementById('search-heading').textContent = `Results for “${corrected}”`;
             setSearchNote(`Showing results for <strong>${escapeHtml(corrected)}</strong>. <button class="link-btn" onclick="searchExactly()">Search for “${escapeHtml(raw.trim())}” instead</button>`);
@@ -1305,6 +1499,144 @@ async function runSearch(raw, { exact = false } = {}) {
     }
 }
 
+// --- SEARCH SUGGESTIONS -----------------------------------------------------
+const RECENT_SEARCHES_KEY = 'recent_searches';
+let suggestSeq = 0;
+let suggestTimer = null;
+let suggestItems = [];   // what Enter / arrow keys act on
+let suggestIndex = -1;
+
+function getRecentSearches() {
+    try {
+        const list = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
+        return Array.isArray(list) ? list.filter(x => typeof x === 'string') : [];
+    } catch (e) { return []; }
+}
+
+function setRecentSearches(list) {
+    try { localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(list.slice(0, 8))); } catch (e) {}
+}
+
+function saveRecentSearch(raw) {
+    const q = String(raw || '').trim();
+    if (q.length < 2) return;
+    setRecentSearches([q, ...getRecentSearches().filter(x => x.toLowerCase() !== q.toLowerCase())]);
+}
+
+function removeRecentSearch(q) {
+    setRecentSearches(getRecentSearches().filter(x => x !== q));
+    renderRecentSearches();
+    document.getElementById('search-input').focus();
+}
+
+function clearRecentSearches() {
+    setRecentSearches([]);
+    closeSuggest();
+    document.getElementById('search-input').focus();
+}
+
+function suggestBox() { return document.getElementById('search-suggest'); }
+
+function openSuggest(html) {
+    const box = suggestBox();
+    box.innerHTML = html;
+    box.hidden = false;
+    suggestIndex = -1;
+    document.getElementById('search-input').setAttribute('aria-expanded', 'true');
+}
+
+function closeSuggest() {
+    const box = suggestBox();
+    if (!box) return;
+    box.hidden = true;
+    suggestIndex = -1;
+    suggestSeq++;
+    clearTimeout(suggestTimer);
+    document.getElementById('search-input').setAttribute('aria-expanded', 'false');
+}
+
+function renderRecentSearches() {
+    const list = getRecentSearches();
+    if (!list.length) { closeSuggest(); return; }
+    suggestItems = list.map(q => ({ kind: 'recent', q }));
+    openSuggest(`
+        <div class="ss-head"><span>Recent searches</span><button type="button" class="link-btn" onmousedown="event.preventDefault()" onclick="clearRecentSearches()">Clear</button></div>
+        ${list.map((q, i) => `
+            <div class="ss-item ss-recent" role="option" data-i="${i}" onmousedown="event.preventDefault()" onclick="pickSuggestion(${i})">
+                <i class="fas fa-clock-rotate-left ss-icon"></i>
+                <span class="ss-text">${escapeHtml(q)}</span>
+                <button type="button" class="ss-remove" aria-label="Remove ${escapeHtml(q)}" onmousedown="event.preventDefault()"
+                    onclick="event.stopPropagation(); removeRecentSearch(${escapeHtml(JSON.stringify(q))})"><i class="fas fa-xmark"></i></button>
+            </div>`).join('')}`);
+}
+
+function suggestionMeta(m) {
+    const kind = m.media_type === 'tv' ? 'Series' : 'Movie';
+    const date = m.release_date || m.first_air_date || '';
+    const up = releaseStatus(m);
+    return `${kind}${date ? ' · ' + date.slice(0, 4) : ''}${up ? ` <span class="ss-soon">${escapeHtml(up.short)}</span>` : ''}`;
+}
+
+async function updateSuggestions(raw) {
+    const seq = ++suggestSeq;
+    const q = normalizeText(raw);
+    if (q.length < 2) { renderRecentSearches(); return; }
+    if (suggestBox().hidden || !suggestItems.some(x => x.kind === 'title')) {
+        suggestItems = [];
+        openSuggest('<div class="ss-status"><div class="player-spinner"></div>Searching…</div>');
+    }
+    try {
+        const found = await findResults(raw, { light: true, isStale: () => seq !== suggestSeq });
+        if (!found || seq !== suggestSeq) return;
+        const top = found.results.filter(m => m.media_type !== 'person').slice(0, 5);
+        const label = found.corrected || raw.trim();
+        suggestItems = top.map(m => ({ kind: 'title', m })).concat({ kind: 'all', q: raw.trim() });
+        openSuggest(`
+            ${found.corrected ? `<div class="ss-head"><span>Showing ${escapeHtml(found.corrected)}</span></div>` : ''}
+            ${top.length ? '' : `<div class="ss-status">No titles match “${escapeHtml(raw.trim())}”</div>`}
+            ${top.map((m, i) => `
+                <div class="ss-item" role="option" data-i="${i}" onmousedown="event.preventDefault()" onclick="pickSuggestion(${i})">
+                    ${m.poster_path ? `<img class="ss-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="" loading="lazy">` : '<div class="ss-poster"></div>'}
+                    <span class="ss-body">
+                        <span class="ss-title">${escapeHtml(m.title || m.name)}</span>
+                        <span class="ss-meta">${suggestionMeta(m)}</span>
+                    </span>
+                </div>`).join('')}
+            <div class="ss-item ss-all" role="option" data-i="${top.length}" onmousedown="event.preventDefault()" onclick="pickSuggestion(${top.length})">
+                <i class="fas fa-magnifying-glass ss-icon"></i>
+                <span class="ss-text">See all results for “${escapeHtml(label)}”</span>
+                <i class="fas fa-arrow-right ss-go"></i>
+            </div>`);
+    } catch (e) {
+        if (seq === suggestSeq) closeSuggest();
+    }
+}
+
+function highlightSuggestion(i) {
+    const rows = [...suggestBox().querySelectorAll('.ss-item')];
+    if (!rows.length) return;
+    suggestIndex = (i + rows.length) % rows.length;
+    rows.forEach((r, n) => r.classList.toggle('is-active', n === suggestIndex));
+    rows[suggestIndex].scrollIntoView({ block: 'nearest' });
+}
+
+function pickSuggestion(i) {
+    const item = suggestItems[i];
+    const input = document.getElementById('search-input');
+    if (!item) return;
+    if (item.kind === 'title') {
+        saveRecentSearch(input.value);
+        closeSuggest();
+        input.blur();
+        openModal(item.m, item.m.media_type);
+    } else if (item.kind === 'recent') {
+        input.value = item.q;
+        runSearch(item.q);
+    } else {
+        runSearch(item.q);
+    }
+}
+
 function searchExactly() {
     runSearch(document.getElementById('search-input').value, { exact: true });
 }
@@ -1314,25 +1646,52 @@ function escapeHtml(str) {
 }
 
 const searchInputEl = document.getElementById('search-input');
-searchInputEl.addEventListener('focus', () => loadSearchIndex());
+searchInputEl.addEventListener('focus', () => {
+    loadSearchIndex();
+    if (normalizeText(searchInputEl.value).length >= 2) updateSuggestions(searchInputEl.value);
+    else renderRecentSearches();
+});
+searchInputEl.addEventListener('blur', () => setTimeout(() => {
+    if (document.activeElement !== searchInputEl) closeSuggest();
+}, 120));
 searchInputEl.addEventListener('input', (e) => {
     const raw = e.target.value;
-    clearTimeout(searchTimer);
+    clearTimeout(suggestTimer);
     if (normalizeText(raw).length >= 2) {
-        searchTimer = setTimeout(() => runSearch(raw), 300);
+        suggestTimer = setTimeout(() => updateSuggestions(raw), 200);
     } else if (raw.trim().length === 0) {
         searchSeq++;
-        init();
-        document.getElementById('hero').style.display = 'flex';
+        renderRecentSearches();
+        if (document.getElementById('search-results')) {
+            setUrl({}, 'replace');
+            init();
+            document.getElementById('hero').style.display = 'flex';
+        }
+    } else {
+        renderRecentSearches();
     }
 });
 searchInputEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        clearTimeout(searchTimer);
-        runSearch(e.target.value);
+    const open = !suggestBox().hidden;
+    if (e.key === 'ArrowDown' && open) {
+        e.preventDefault();
+        highlightSuggestion(suggestIndex + 1);
+    } else if (e.key === 'ArrowUp' && open) {
+        e.preventDefault();
+        highlightSuggestion(suggestIndex - 1);
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        clearTimeout(suggestTimer);
+        if (open && suggestIndex >= 0) pickSuggestion(suggestIndex);
+        else if (normalizeText(e.target.value).length >= 2) runSearch(e.target.value);
     } else if (e.key === 'Escape') {
-        toggleSearch();
+        e.preventDefault();
+        if (open) closeSuggest();
+        else toggleSearch();
     }
+});
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-container')) closeSuggest();
 });
 
 window.addEventListener("scroll", () => {
@@ -1470,19 +1829,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-document.addEventListener('keydown', (e) => {
-    const overlay = document.getElementById('video-overlay');
-    if (!overlay || !overlay.classList.contains('is-open')) return;
-    if (e.key === 'Escape') {
-        const picker = document.getElementById('src-picker');
-        if (picker && picker.classList.contains('is-open')) {
-            toggleServerMenu(false);
-            document.getElementById('src-trigger').focus();
-        } else {
-            closeVideo();
-        }
-    }
-});
 
 let veilTimer = null;
 
@@ -1503,9 +1849,23 @@ function hideVeil() {
     if (veil) veil.classList.add('is-hidden');
 }
 
+// Changing an iframe's src adds a step to the browser's back history, so
+// swap in a fresh iframe instead: the back button then closes the player
+// rather than rewinding the video frame.
+function freshVideoFrame(url) {
+    const old = document.getElementById('video-frame');
+    if (!old) return null;
+    const frame = old.cloneNode(false);
+    frame.onload = null;
+    if (url) frame.src = url;
+    else frame.removeAttribute('src');
+    old.replaceWith(frame);
+    return frame;
+}
+
 function updateIframeSource() {
     const url = getEmbedUrl();
-    const iframe = document.getElementById('video-frame');
+    const iframe = freshVideoFrame(null);
     if (iframe) {
         showVeil();
         // Some providers fire `load` late (they keep streaming resources), so
@@ -1513,7 +1873,7 @@ function updateIframeSource() {
         clearTimeout(veilTimer);
         veilTimer = setTimeout(hideVeil, 4000);
         iframe.onload = () => { if (iframe.src && iframe.src !== 'about:blank') hideVeil(); };
-        iframe.src = url;
+        iframe.src = url; // a fresh, never-navigated frame: no history entry
     }
     const extLink = document.getElementById('video-external-link');
     if (extLink) extLink.href = url;
@@ -1563,8 +1923,15 @@ async function fetchSeasons(tvId) {
     }
 }
 
+function playerParams() {
+    const { type, id, season, episode } = playbackState;
+    return type === 'tv' ? { tv: id, s: season, e: episode } : { movie: id, play: 1 };
+}
+
 function openPlayer() {
     const overlay = document.getElementById('video-overlay');
+    const wasOpen = overlay.classList.contains('is-open');
+    if (!routing) setUrl(playerParams(), wasOpen ? 'replace' : 'push', { layer: 'player' });
     overlay.classList.add('is-open');
     document.body.classList.add('player-open');
     updateVideoControls();
@@ -1573,6 +1940,11 @@ function openPlayer() {
 
 async function playMedia(item) {
     if (!item || !item.id) return;
+    const upcoming = releaseStatus(item);
+    if (upcoming) {
+        showToast(`${item.title || item.name} isn't out yet. ${upcoming.long}.`);
+        return;
+    }
     const type = item.media_type || (item.title ? 'movie' : 'tv');
     const saved = getHistoryEntry(item.id);
 
@@ -1628,16 +2000,27 @@ async function playEpisode(tvId, season, episode) {
     }
 }
 
+// Close the player; like the popup, step back through history when we pushed it.
 function closeVideo() {
+    if (history.state && history.state.layer === 'player') { history.back(); return; }
+    closePlayerUI();
+    setUrl(detailsOpen() && currentModalItem ? { [currentModalItem.media_type]: currentModalItem.id } : {}, 'replace',
+        detailsOpen() ? { layer: 'details' } : {});
+}
+
+function playerOpen() {
     const overlay = document.getElementById('video-overlay');
-    const iframe = document.getElementById('video-frame');
+    return overlay && overlay.classList.contains('is-open');
+}
+
+function closePlayerUI() {
+    const overlay = document.getElementById('video-overlay');
     overlay.classList.remove('is-open');
     document.body.classList.remove('player-open');
     if (document.getElementById('history-section')) loadRecentlyViewed();
     toggleServerMenu(false);
     clearTimeout(veilTimer);
-    iframe.onload = null;
-    iframe.src = 'about:blank'; // stop playback
+    freshVideoFrame(null); // stop playback without a history entry
     const extLink = document.getElementById('video-external-link');
     if (extLink) extLink.href = '#';
 }
@@ -1683,7 +2066,12 @@ function prevEpisode() {
     updateIframeSource();
 }
 
+function syncPlayerUrl() {
+    if (playerOpen() && !routing) setUrl(playerParams(), 'replace', { layer: 'player' });
+}
+
 function rememberEpisode() {
+    syncPlayerUrl();
     const entry = getHistoryEntry(playbackState.id);
     if (entry) addToHistory(entry, 'tv', { season: playbackState.season, episode: playbackState.episode, done: false });
 }
@@ -1750,6 +2138,7 @@ window.addEventListener('message', (e) => {
         playbackState.season = Number(d.season);
         playbackState.episode = Number(d.episode);
         updateVideoControls();
+        syncPlayerUrl();
     }
 
     const now = Date.now();
@@ -1776,6 +2165,7 @@ let exploreState = {
 
 async function loadExplore() {
     viewSeq++;
+    clearSearchUrl();
     setActiveNav("nav-explore");
     const container = document.getElementById("main-content");
     container.style.marginTop = "80px";
@@ -2242,27 +2632,130 @@ async function loadReviews(type, id) {
     }
 }
 
+function shareUrl(params) {
+    return `${location.origin}${location.pathname}?${new URLSearchParams(params)}`;
+}
+
+function shareLink(url, name) {
+    if (navigator.share) {
+        navigator.share({ title: `${name} - MovieDeck`, text: `Watch ${name} on MovieDeck`, url })
+            .catch(() => {});
+        return;
+    }
+    navigator.clipboard.writeText(url)
+        .then(() => showToast("Link copied"))
+        .catch(() => showToast("Couldn't copy the link"));
+}
+
 function shareContent() {
     if (!currentModalItem) return;
-    
     const type = currentModalItem.media_type || (currentModalItem.title ? "movie" : "tv");
-    const name = currentModalItem.title || currentModalItem.name;
-    const url = `${window.location.origin}${window.location.pathname}#${type}/${currentModalItem.id}`;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: `${name} - MovieDeck`,
-            text: `Check out ${name} on MovieDeck!`,
-            url: url
-        }).catch(console.error);
-    } else {
-        navigator.clipboard.writeText(url).then(() => {
-            showToast("Link Copied!");
-        }).catch(err => {
-            console.error('Failed to copy: ', err);
-            showToast("Failed to copy link");
-        });
+    shareLink(shareUrl({ [type]: currentModalItem.id }), currentModalItem.title || currentModalItem.name);
+}
+
+// From the player: link straight to this episode (or the movie, playing).
+function sharePlaying() {
+    const { type, season, episode, title } = playbackState;
+    const name = type === 'tv' ? `${title} S${season} E${episode}` : title;
+    shareLink(shareUrl(playerParams()), name);
+}
+
+// --- BACKUP & RESTORE ------------------------------------------------------
+// Everything lives in this browser's storage; a backup file lets people keep
+// their watchlist and Continue Watching when they clear data or switch device.
+const BACKUP_SETTINGS = ['app_theme', 'show_ratings', 'preferred_server', 'surprise_prefs', 'recent_searches'];
+
+function readJsonKey(key, fallback) {
+    try {
+        const v = JSON.parse(localStorage.getItem(key) || 'null');
+        return v === null ? fallback : v;
+    } catch (e) { return fallback; }
+}
+
+function exportBackup() {
+    const settings = {};
+    BACKUP_SETTINGS.forEach(k => {
+        const v = localStorage.getItem(k);
+        if (v !== null) settings[k] = v;
+    });
+    const data = {
+        app: 'MovieDeck',
+        version: 1,
+        exported: new Date().toISOString(),
+        watchlist: readJsonKey(getWishlistKey(), []),
+        history: readHistory(),
+        settings,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `moviedeck-backup-${todayISO()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(`Backup saved: ${data.watchlist.length} in watchlist, ${data.history.length} in history`);
+}
+
+function importBackup() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+    input.onchange = async () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        try {
+            const data = JSON.parse(await file.text());
+            restoreBackup(data);
+        } catch (e) {
+            showToast("That file isn't a MovieDeck backup");
+        }
+    };
+    input.click();
+}
+
+function isTitleEntry(x) {
+    return x && typeof x === 'object' && Number.isFinite(Number(x.id)) && (x.title || x.name);
+}
+
+// Merges a backup into what's already here, so restoring never loses anything.
+function restoreBackup(data) {
+    if (!data || data.app !== 'MovieDeck' || !Array.isArray(data.watchlist) || !Array.isArray(data.history)) {
+        showToast("That file isn't a MovieDeck backup");
+        return;
     }
+    const key = (x) => `${x.media_type || 'movie'}:${x.id}`;
+
+    const list = readJsonKey(getWishlistKey(), []);
+    const have = new Set(list.map(key));
+    let addedList = 0;
+    data.watchlist.filter(isTitleEntry).forEach(x => {
+        if (!have.has(key(x))) { list.push(x); have.add(key(x)); addedList++; }
+    });
+    localStorage.setItem(getWishlistKey(), JSON.stringify(list));
+
+    const byId = new Map(readHistory().map(x => [x.id, x]));
+    let addedHist = 0;
+    data.history.filter(isTitleEntry).forEach(x => {
+        const cur = byId.get(x.id);
+        if (!cur) addedHist++;
+        if (!cur || (x.updated || 0) > (cur.updated || 0)) byId.set(x.id, x);
+    });
+    writeHistory([...byId.values()].sort((a, b) => (b.updated || 0) - (a.updated || 0)));
+
+    if (data.settings && typeof data.settings === 'object') {
+        BACKUP_SETTINGS.forEach(k => {
+            if (typeof data.settings[k] === 'string') localStorage.setItem(k, data.settings[k]);
+        });
+        const theme = localStorage.getItem('app_theme');
+        if (theme) applyTheme(theme);
+        playbackState.server = loadPreferredServer();
+    }
+
+    loadRecentlyViewed();
+    if (document.getElementById('nav-list').classList.contains('active')) loadWishlist();
+    showToast(`Restored: ${addedList} new in watchlist, ${addedHist} new in history`);
 }
 
 function showToast(message) {
@@ -2287,26 +2780,22 @@ window.addEventListener("load", async () => {
           .catch(err => console.log("service worker not registered", err));
     }
 
-    if(window.location.hash) {
-        const hash = window.location.hash.substring(1);
-        const [type, id] = hash.split("/");
-        
-        if((type === 'movie' || type === 'tv') && id) {
-            try {
-                const res = await fetch(`${BASE}/${type}/${id}?api_key=${KEY}`);
-                const data = await res.json();
-                if(data && data.success !== false) {
-                   data.media_type = type;
-                   openModal(data);
-                }
-            } catch(e) {
-                console.error("Error loading shared content", e);
-            }
-        }
-    }
+    route();
 });
 
 const legalContent = {
+    shortcuts: {
+        title: "Keyboard shortcuts",
+        body: `<table class="kbd-table">
+                 <tr><td><kbd>/</kbd></td><td>Search</td></tr>
+                 <tr><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd></td><td>Pick a search suggestion</td></tr>
+                 <tr><td><kbd>Esc</kbd></td><td>Close the player, popup, menu or search</td></tr>
+                 <tr><td><kbd>N</kbd></td><td>Next episode (in the player)</td></tr>
+                 <tr><td><kbd>P</kbd></td><td>Previous episode (in the player)</td></tr>
+                 <tr><td><kbd>?</kbd></td><td>Show this list</td></tr>
+               </table>
+               <p class="kbd-note">Shortcuts pause while the video itself has focus. Click the bar under the video to use them again.</p>`
+    },
     privacy: {
         title: "Privacy Policy",
         body: `<p>At MovieDeck, we prioritize your privacy. This policy outlines how we collect, use, and protect your information.</p>
@@ -2659,7 +3148,64 @@ document.addEventListener('click', function() {
     });
 });
 // ----------------------------------
+// --- KEYBOARD SHORTCUTS ----------------------------------------------------
+//   /      search            Esc   close the topmost thing
+//   N / P  next / previous episode in the player          ?   this list
+function isTypingTarget(el) {
+    return el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+}
+
+function isShown(id) {
+    const el = document.getElementById(id);
+    return el && el.style.display === 'flex';
+}
+
+function closeTopmost() {
+    const menus = document.querySelectorAll('.profile-dropdown.show, .surprise-panel.show');
+    if (menus.length) { menus.forEach(d => d.classList.remove('show')); return true; }
+    const picker = document.getElementById('src-picker');
+    if (picker && picker.classList.contains('is-open')) {
+        toggleServerMenu(false);
+        document.getElementById('src-trigger').focus();
+        return true;
+    }
+    if (isShown('text-modal')) { document.getElementById('text-modal').style.display = 'none'; document.body.style.overflow = 'auto'; return true; }
+    if (playerOpen()) { closeVideo(); return true; }
+    if (isShown('trailer-overlay')) { closeTrailer(); return true; }
+    if (isShown('person-modal')) { closePersonModal({ target: { id: 'person-modal' } }); return true; }
+    if (detailsOpen()) { closeDetails(); return true; }
+    if (searchActive) { toggleSearch(); return true; }
+    return false;
+}
+
 document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    document.querySelectorAll('.profile-dropdown.show, .surprise-panel.show').forEach(d => d.classList.remove('show'));
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+
+    if (e.key === 'Escape') {
+        if (closeTopmost()) e.preventDefault();
+        return;
+    }
+    if (isTypingTarget(e.target)) return;
+
+    if (e.key === '/') {
+        e.preventDefault();
+        if (playerOpen()) closeVideo();
+        if (!searchActive) toggleSearch();
+        else document.getElementById('search-input').focus();
+    } else if ((e.key === 'n' || e.key === 'N') && playerOpen() && playbackState.type === 'tv') {
+        e.preventDefault();
+        if (!document.getElementById('btn-next-ep').disabled) {
+            nextEpisode();
+            showToast(`Next: S${playbackState.season} · E${playbackState.episode}`);
+        }
+    } else if ((e.key === 'p' || e.key === 'P') && playerOpen() && playbackState.type === 'tv') {
+        e.preventDefault();
+        if (!document.getElementById('btn-prev-ep').disabled) {
+            prevEpisode();
+            showToast(`Previous: S${playbackState.season} · E${playbackState.episode}`);
+        }
+    } else if (e.key === '?') {
+        e.preventDefault();
+        showTextModal('shortcuts');
+    }
 });
