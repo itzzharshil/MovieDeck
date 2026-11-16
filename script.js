@@ -111,7 +111,21 @@ function setActiveNav(id) {
     document.getElementById(id).classList.add("active");
 }
 
+// Recent South Indian releases (last two years, already out), so this row
+// doesn't repeat the all-time blockbusters in "Pan-India Hits".
+function southIndianRecentEndpoint() {
+    const day = 864e5;
+    const today = new Date().toISOString().slice(0, 10);
+    const since = new Date(Date.now() - 730 * day).toISOString().slice(0, 10);
+    return `/discover/movie?with_original_language=ta|te|ml|kn&sort_by=popularity.desc&vote_count.gte=20&primary_release_date.gte=${since}&primary_release_date.lte=${today}`;
+}
+
+// Bumped whenever the main view changes, so a page that is still loading
+// (e.g. the homepage rows) doesn't paint over the page the user moved to.
+let viewSeq = 0;
+
 async function loadContent(type) {
+    const seq = ++viewSeq;
     const loader = document.getElementById("global-loader");
     if(loader) loader.classList.remove("hidden");
     
@@ -135,12 +149,18 @@ async function loadContent(type) {
     }
 
     setTimeout(async () => {
+        if (seq !== viewSeq) { if (loader) loader.classList.add("hidden"); return; }
         let promises = [];
         if (heroPromise) promises.push(heroPromise);
 
         if (type === "home") {
             promises.push(createRow("Trending Now", "/trending/all/day"));
             loadRecentlyViewed();
+            // Indian rows. TMDB has no "dubbed audio" data, so the pan-India
+            // row lists big South Indian releases (these get Hindi versions).
+            promises.push(createRow("Bollywood", "/discover/movie?with_original_language=hi&sort_by=popularity.desc&vote_count.gte=50", "movie"));
+            promises.push(createRow("South Indian", southIndianRecentEndpoint(), "movie"));
+            promises.push(createRow("Pan-India Hits", "/discover/movie?with_original_language=ta|te|ml|kn&sort_by=popularity.desc&vote_count.gte=150", "movie"));
             promises.push(createRow("Top Rated", "/movie/top_rated", "movie"));
             promises.push(createRow("Action", "/discover/movie?with_genres=28", "movie"));
             promises.push(createRow("Sci-Fi", "/discover/movie?with_genres=878", "movie"));
@@ -151,12 +171,15 @@ async function loadContent(type) {
         } else if (type === "tv") {
             promises.push(createRow("Popular Series", "/tv/popular", "tv"));
             loadRecentlyViewed();
+            promises.push(createRow("Indian Web Series", "/discover/tv?with_original_language=hi|ta|te|ml|kn&sort_by=vote_count.desc", "tv"));
             promises.push(createRow("Top Rated TV", "/tv/top_rated", "tv"));
             promises.push(createRow("Sci-Fi & Fantasy", "/discover/tv?with_genres=10765", "tv"));
             promises.push(createRow("Reality", "/discover/tv?with_genres=10764", "tv"));
         } else if (type === "movie") {
             promises.push(createRow("Popular Movies", "/movie/popular", "movie"));
             loadRecentlyViewed();
+            promises.push(createRow("Bollywood", "/discover/movie?with_original_language=hi&sort_by=popularity.desc&vote_count.gte=50", "movie"));
+            promises.push(createRow("South Indian", southIndianRecentEndpoint(), "movie"));
             promises.push(createRow("Comedy", "/discover/movie?with_genres=35", "movie"));
             promises.push(createRow("Family", "/discover/movie?with_genres=10751", "movie"));
         }
@@ -164,7 +187,7 @@ async function loadContent(type) {
         await Promise.all(promises);
     
         const mainContainer = document.getElementById("main-content");
-        if (mainContainer) {
+        if (mainContainer && seq === viewSeq) {
             mainContainer.style.marginTop = "";
         }
 
@@ -303,6 +326,7 @@ let gridState = {
 };
 
 async function loadGrid(title, endpoint, type) {
+    viewSeq++;
     const loader = document.getElementById("global-loader");
     if(loader) loader.classList.remove("hidden");
 
@@ -597,6 +621,7 @@ function addToWishlistHero() {
 }
 
 function loadWishlist() {
+    viewSeq++;
     setActiveNav("nav-list");
     const container = document.getElementById("main-content");
     container.style.marginTop = "80px";
@@ -1137,6 +1162,7 @@ function rankResults(results, query) {
 function renderSearchShell(raw) {
     const container = document.getElementById('main-content');
     if (!document.getElementById('search-results')) {
+        viewSeq++;
         gridState.active = false;
         container.style.marginTop = '80px';
         document.getElementById('hero').style.display = 'none';
@@ -1723,12 +1749,13 @@ let exploreState = {
 };
 
 async function loadExplore() {
+    viewSeq++;
     setActiveNav("nav-explore");
     const container = document.getElementById("main-content");
     container.style.marginTop = "80px";
     document.getElementById("hero").style.display = "none";
     
-    exploreState = { page: 1, genre: '', year: '', type: 'movie', loading: false };
+    exploreState = { page: 1, genre: '', year: '', language: '', type: 'movie', loading: false };
     
     container.innerHTML = `
         <div class="filter-container">
@@ -1742,6 +1769,9 @@ async function loadExplore() {
             <select id="filter-year" class="filter-select" onchange="applyFilters()">
                 <option value="">All Years</option>
                 ${generateYearOptions()}
+            </select>
+            <select id="filter-language" class="filter-select" onchange="applyFilters()" aria-label="Language">
+                ${generateLanguageOptions()}
             </select>
         </div>
         <div class="category-row">
@@ -1758,6 +1788,29 @@ async function loadExplore() {
     
     window.removeEventListener("scroll", handleExploreScroll);
     window.addEventListener("scroll", handleExploreScroll);
+}
+
+// TMDB original-language codes. "|" means any of them.
+const EXPLORE_LANGUAGES = [
+    { code: '', name: 'All Languages' },
+    { code: 'hi|ta|te|ml|kn|bn|mr|pa|gu', name: 'All Indian' },
+    { code: 'hi', name: 'Hindi' },
+    { code: 'ta', name: 'Tamil' },
+    { code: 'te', name: 'Telugu' },
+    { code: 'ml', name: 'Malayalam' },
+    { code: 'kn', name: 'Kannada' },
+    { code: 'bn', name: 'Bengali' },
+    { code: 'mr', name: 'Marathi' },
+    { code: 'pa', name: 'Punjabi' },
+    { code: 'en', name: 'English' },
+    { code: 'ko', name: 'Korean' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'fr', name: 'French' },
+];
+
+function generateLanguageOptions() {
+    return EXPLORE_LANGUAGES.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
 }
 
 function generateYearOptions() {
@@ -1809,11 +1862,13 @@ async function applyFilters() {
     exploreState.type = document.getElementById("filter-type").value;
     exploreState.genre = document.getElementById("filter-genre").value;
     exploreState.year = document.getElementById("filter-year").value;
+    exploreState.language = document.getElementById("filter-language").value;
     exploreState.loading = false;
     
     document.getElementById("explore-grid").innerHTML = "";
-    document.getElementById("explore-heading").innerText = 
-        `Explore ${exploreState.type === 'movie' ? 'Movies' : 'TV Series'}`;
+    const lang = EXPLORE_LANGUAGES.find(l => l.code === exploreState.language);
+    document.getElementById("explore-heading").innerText =
+        `Explore ${lang && lang.code ? lang.name + ' ' : ''}${exploreState.type === 'movie' ? 'Movies' : 'TV Series'}`;
         
     await loadMoreExplore();
 
@@ -1831,6 +1886,10 @@ async function loadMoreExplore() {
         let url = `${BASE}/discover/${exploreState.type}?api_key=${KEY}&page=${exploreState.page}`;
         
         if (exploreState.genre) url += `&with_genres=${exploreState.genre}`;
+        if (exploreState.language) {
+            // Smaller languages: skip titles nobody has rated yet.
+            url += `&with_original_language=${exploreState.language}&vote_count.gte=5`;
+        }
         if (exploreState.year) {
             if (exploreState.type === 'movie') url += `&primary_release_year=${exploreState.year}`;
             else url += `&first_air_date_year=${exploreState.year}`;
@@ -1852,6 +1911,9 @@ async function loadMoreExplore() {
                 }
             });
             exploreState.page++;
+            if (exploreState.page === 2 && !grid.children.length) {
+                grid.innerHTML = '<div class="search-empty"><i class="fas fa-film"></i><p>Nothing matches these filters. Try another year or genre.</p></div>';
+            }
         }
     } catch (e) {
         console.error("Explore Load Error", e);

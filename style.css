@@ -2915,3 +2915,14 @@ body.player-open { overflow: hidden; }
 @media (max-width: 768px) {
   .modal-buttons .play-detail { display: none; }
 }
+
+/* Explore filters: 2×2 grid on phones so no label gets cut off. */
+@media (max-width: 600px) {
+  .filter-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    overflow: visible;
+  }
+  .filter-container .filter-select { width: 100%; min-width: 0; }
+}
