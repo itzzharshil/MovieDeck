@@ -126,6 +126,8 @@ let viewSeq = 0;
 
 async function loadContent(type) {
     const seq = ++viewSeq;
+    gridState.active = false;
+    if (rowObserver) rowObserver.disconnect();
     const loader = document.getElementById("global-loader");
     if(loader) loader.classList.remove("hidden");
     
@@ -153,37 +155,45 @@ async function loadContent(type) {
         let promises = [];
         if (heroPromise) promises.push(heroPromise);
 
+        // The first rows load right away; the rest as you scroll to them.
+        const rows = [];
+        const add = (title, endpoint, rowType) => rows.push([title, endpoint, rowType]);
+
+        // Eight rows per page; every other genre is one tap away in Explore.
         if (type === "home") {
-            promises.push(createRow("Trending Now", "/trending/all/day"));
-            loadRecentlyViewed();
-            // Indian rows. TMDB has no "dubbed audio" data, so the pan-India
-            // row lists big South Indian releases (these get Hindi versions).
-            promises.push(createRow("Bollywood", "/discover/movie?with_original_language=hi&sort_by=popularity.desc&vote_count.gte=50", "movie"));
-            promises.push(createRow("South Indian", southIndianRecentEndpoint(), "movie"));
-            promises.push(createRow("Pan-India Hits", "/discover/movie?with_original_language=ta|te|ml|kn&sort_by=popularity.desc&vote_count.gte=150", "movie"));
-            promises.push(createRow("Top Rated", "/movie/top_rated", "movie"));
-            promises.push(createRow("Action", "/discover/movie?with_genres=28", "movie"));
-            promises.push(createRow("Sci-Fi", "/discover/movie?with_genres=878", "movie"));
-            promises.push(createRow("Horror", "/discover/movie?with_genres=27", "movie"));
-            promises.push(createRow("Animation", "/discover/movie?with_genres=16", "movie"));
-            promises.push(createRow("Romance", "/discover/movie?with_genres=10749", "movie"));
-            promises.push(createRow("Documentary", "/discover/movie?with_genres=99", "movie"));
+            add("Trending Now", "/trending/all/day");
+            add("Bollywood", "/discover/movie?with_original_language=hi&sort_by=popularity.desc&vote_count.gte=50", "movie");
+            add("South Indian", southIndianRecentEndpoint(), "movie");
+            add("Pan-India Hits", "/discover/movie?with_original_language=ta|te|ml|kn&sort_by=popularity.desc&vote_count.gte=150", "movie");
+            add("Popular Series", "/tv/popular", "tv");
+            add("Action", genreRow('movie', 28), "movie");
+            add("Comedy", genreRow('movie', 35), "movie");
+            add("Horror", genreRow('movie', 27), "movie");
         } else if (type === "tv") {
-            promises.push(createRow("Popular Series", "/tv/popular", "tv"));
-            loadRecentlyViewed();
-            promises.push(createRow("Indian Web Series", "/discover/tv?with_original_language=hi|ta|te|ml|kn&sort_by=vote_count.desc", "tv"));
-            promises.push(createRow("Top Rated TV", "/tv/top_rated", "tv"));
-            promises.push(createRow("Sci-Fi & Fantasy", "/discover/tv?with_genres=10765", "tv"));
-            promises.push(createRow("Reality", "/discover/tv?with_genres=10764", "tv"));
+            add("Popular Series", "/tv/popular", "tv");
+            add("Airing This Week", "/tv/on_the_air", "tv");
+            add("Indian Web Series", "/discover/tv?with_original_language=hi|ta|te|ml|kn&sort_by=vote_count.desc", "tv");
+            add("K-Drama", "/discover/tv?with_original_language=ko&with_genres=18&sort_by=popularity.desc&vote_count.gte=30", "tv");
+            add("Anime", "/discover/tv?with_original_language=ja&with_genres=16&sort_by=popularity.desc&vote_count.gte=30", "tv");
+            add("Crime", genreRow('tv', 80), "tv");
+            add("Comedy", genreRow('tv', 35), "tv");
+            add("Sci-Fi & Fantasy", genreRow('tv', 10765), "tv");
         } else if (type === "movie") {
-            promises.push(createRow("Popular Movies", "/movie/popular", "movie"));
-            loadRecentlyViewed();
-            promises.push(createRow("Bollywood", "/discover/movie?with_original_language=hi&sort_by=popularity.desc&vote_count.gte=50", "movie"));
-            promises.push(createRow("South Indian", southIndianRecentEndpoint(), "movie"));
-            promises.push(createRow("Comedy", "/discover/movie?with_genres=35", "movie"));
-            promises.push(createRow("Family", "/discover/movie?with_genres=10751", "movie"));
+            add("Popular Movies", "/movie/popular", "movie");
+            add("Now Playing", "/movie/now_playing", "movie");
+            add("Bollywood", "/discover/movie?with_original_language=hi&sort_by=popularity.desc&vote_count.gte=50", "movie");
+            add("Top Rated Movies", "/movie/top_rated", "movie");
+            add("Action", genreRow('movie', 28), "movie");
+            add("Comedy", genreRow('movie', 35), "movie");
+            add("Thriller", genreRow('movie', 53), "movie");
+            add("Sci-Fi", genreRow('movie', 878), "movie");
         }
-        
+
+        rows.forEach(([title, endpoint, rowType], i) => {
+            promises.push(createRow(title, endpoint, rowType, { lazy: i >= 4 }));
+            if (i === 0) loadRecentlyViewed(); // Continue Watching sits under the first row
+        });
+
         await Promise.all(promises);
     
         const mainContainer = document.getElementById("main-content");
@@ -363,6 +373,8 @@ async function loadGrid(title, endpoint, type) {
 }
 
 async function loadMoreGrid() {
+    // The grid may be gone (user went to another page); stop infinite scroll.
+    if (!document.getElementById("grid-posters")) { gridState.active = false; return; }
     if (gridState.loading) return;
     gridState.loading = true;
     document.getElementById("grid-loader").style.display = "block";
@@ -394,60 +406,74 @@ async function loadMoreGrid() {
         console.error(e);
     } finally {
         gridState.loading = false;
-        document.getElementById("grid-loader").style.display = "none";
+        const gridLoader = document.getElementById("grid-loader");
+        if (gridLoader) gridLoader.style.display = "none";
     }
 }
 
-async function createRow(title, endpoint, forcedType = null) {
+// Rows below the first few load when they're about to scroll into view,
+// so a page with 20 rows doesn't make 20 requests up front.
+const rowObserver = window.IntersectionObserver
+    ? new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (!e.isIntersecting) return;
+            rowObserver.unobserve(e.target);
+            const load = e.target._loadRow;
+            if (load) load();
+        });
+    }, { rootMargin: '600px 0px' })
+    : null;
+
+function createRow(title, endpoint, forcedType = null, { lazy = false } = {}) {
     const container = document.getElementById("main-content");
     const section = document.createElement("div");
     section.className = "category-row";
-    
+
     const header = document.createElement("div");
-    header.style.display = "flex";
-    header.style.justifyContent = "space-between";
-    header.style.alignItems = "center";
-    header.style.paddingRight = "4%";
-    
-    header.innerHTML = `<h2>${title}</h2>`;
-    
-    const seeAll = document.createElement("span");
-    seeAll.innerText = "See All >";
-    seeAll.style.color = "#999";
-    seeAll.style.fontSize = "0.9rem";
-    seeAll.style.fontWeight = "bold";
-    seeAll.style.cursor = "pointer";
+    header.className = "row-header";
+    const h2 = document.createElement("h2");
+    h2.textContent = title;
+    const seeAll = document.createElement("button");
+    seeAll.type = "button";
+    seeAll.className = "see-all";
+    seeAll.innerHTML = 'See All <i class="fas fa-chevron-right"></i>';
+    seeAll.setAttribute('aria-label', `See all ${title}`);
     seeAll.onclick = () => loadGrid(title, endpoint, forcedType);
-    
-    header.appendChild(seeAll);
+    header.append(h2, seeAll);
     section.appendChild(header);
-    
+
     const postersDiv = document.createElement("div");
     postersDiv.className = "row-posters";
     section.appendChild(postersDiv);
-    
     container.appendChild(section);
-    
 
+    const load = async () => {
+        try {
+            const url = endpoint.includes("?")
+                ? `${BASE}${endpoint}&api_key=${KEY}`
+                : `${BASE}${endpoint}?api_key=${KEY}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            postersDiv.innerHTML = "";
+            const items = (data.results || []).filter(m => m.poster_path);
+            if (!items.length) { section.remove(); return; }
+            items.forEach((m) => postersDiv.appendChild(createPosterElement(m, forcedType)));
+        } catch (e) {
+            postersDiv.innerHTML = "<p style='padding-left:20px; color:#555'>Could not load content.</p>";
+        }
+    };
 
-    try {
-        const url = endpoint.includes("?")
-            ? `${BASE}${endpoint}&api_key=${KEY}`
-            : `${BASE}${endpoint}?api_key=${KEY}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        
-        postersDiv.innerHTML = "";
-        
-        data.results.forEach((m) => {
-            if (m.poster_path) {
-                const el = createPosterElement(m, forcedType);
-                postersDiv.appendChild(el);
-            }
-        });
-    } catch (e) {
-        postersDiv.innerHTML = "<p style='padding-left:20px; color:#555'>Could not load content.</p>";
+    if (lazy && rowObserver) {
+        section._loadRow = load;
+        rowObserver.observe(section);
+        return Promise.resolve();
     }
+    return load();
+}
+
+// Discover endpoint for a genre, skipping unrated / unreleased titles.
+function genreRow(type, genreId, minVotes = type === 'movie' ? 100 : 30) {
+    return `/discover/${type}?with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=${minVotes}`;
 }
 
 function readHistory() {

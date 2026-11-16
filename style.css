@@ -2926,3 +2926,42 @@ body.player-open { overflow: hidden; }
   }
   .filter-container .filter-select { width: 100%; min-width: 0; }
 }
+
+/* Row header sits above the poster strip (which overlaps it upward to leave
+   room for the hover lift) so "See All" can be clicked. */
+.row-header {
+  position: relative;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 4%;
+  pointer-events: none;
+}
+.row-header > * { pointer-events: auto; }
+.see-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ui-muted, #999);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, transform 160ms var(--ease-out);
+}
+.see-all i { font-size: 0.65rem; }
+@media (hover: hover) and (pointer: fine) {
+  .see-all:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-main); }
+}
+.see-all:active { transform: scale(0.97); }
+.see-all:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+@media (max-width: 768px) {
+  .row-header { padding-right: 12px; }
+  .see-all { font-size: 0.8rem; padding: 0 8px; }
+}
