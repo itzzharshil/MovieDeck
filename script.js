@@ -1399,7 +1399,7 @@ function openSearchPage({ q = '', focus = true } = {}) {
         container.style.marginTop = '80px';
         document.getElementById('hero').style.display = 'none';
         container.innerHTML = `
-            <section class="search-page" id="search-page">
+            <section class="search-page is-entering" id="search-page">
                 <div id="search-default"></div>
                 <div id="search-results-wrap" class="category-row" hidden>
                     <div class="search-head">
@@ -1411,10 +1411,10 @@ function openSearchPage({ q = '', focus = true } = {}) {
             </section>`;
         const seq = viewSeq;
         const defaults = document.getElementById('search-default');
-        // createRow appends to #main-content; build the rows there, then move them.
+        // One mixed row of what's trending (movies and series).
+        // createRow appends to #main-content; build the row there, then move it.
         [
-            ['Trending Movies', '/trending/movie/week', 'movie'],
-            ['Trending Series', '/trending/tv/week', 'tv'],
+            ['Trending Now', '/trending/all/week', null],
         ].forEach(([title, endpoint, type]) => {
             createRow(title, endpoint, type);
             if (seq !== viewSeq) return;
@@ -1422,7 +1422,12 @@ function openSearchPage({ q = '', focus = true } = {}) {
             if (row && row.classList.contains('category-row')) defaults.appendChild(row);
         });
         document.title = 'MovieDeck - Search';
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        // Commit the starting style, then remove it so the page eases in.
+        // (No requestAnimationFrame: it pauses in background tabs.)
+        const page = document.getElementById('search-page');
+        void page.offsetWidth;
+        page.classList.remove('is-entering');
     }
     const input = document.getElementById('search-input');
     if (q && (input.value !== q || document.getElementById('search-results-wrap').hidden)) {
@@ -1433,12 +1438,26 @@ function openSearchPage({ q = '', focus = true } = {}) {
     }
 }
 
+// Swap which part of the Search page is visible, with a short fade.
+function showSearchPart(part) {
+    const def = document.getElementById('search-default');
+    const res = document.getElementById('search-results-wrap');
+    if (!def || !res) return;
+    const show = part === 'results' ? res : def;
+    const hide = part === 'results' ? def : res;
+    if (!show.hidden) return;
+    hide.hidden = true;
+    show.hidden = false;
+    show.classList.remove('search-fade');
+    void show.offsetWidth; // restart the animation
+    show.classList.add('search-fade');
+}
+
 function showSearchDefault() {
     searchSeq++;
     clearTimeout(searchTimer2);
     if (!searchPageOpen()) return;
-    document.getElementById('search-default').hidden = false;
-    document.getElementById('search-results-wrap').hidden = true;
+    showSearchPart('default');
     document.title = 'MovieDeck - Search';
     setUrl({ search: 1 }, 'replace');
 }
@@ -1474,8 +1493,7 @@ function showSearchDefault() {
 function renderSearchShell(raw) {
     if (!searchPageOpen()) openSearchPage({ focus: false });
     expandSearch(false);
-    document.getElementById('search-default').hidden = true;
-    document.getElementById('search-results-wrap').hidden = false;
+    showSearchPart('results');
     document.getElementById('search-heading').textContent = `Results for “${raw}”`;
 }
 
@@ -2829,9 +2847,21 @@ function setTheme(themeName, elTarget) {
     }
 }
 
+// Dark text on light theme colours (cyan, green, white), white text on dark
+// ones (pink, red), so buttons filled with the theme colour stay readable.
+function readableTextOn(hex) {
+    const n = parseInt(hex.replace('#', ''), 16);
+    const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+    const L = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+    // Keep the site's white button text unless it would be hard to read
+    // (contrast under 3:1), as on cyan, green or white themes.
+    return 1.05 / (L + 0.05) >= 3 ? '#ffffff' : '#0b0b12';
+}
+
 function applyTheme(themeName) {
     const theme = themes[themeName];
     if (theme) {
+        document.documentElement.style.setProperty('--on-primary', readableTextOn(theme.primary));
         document.documentElement.style.setProperty('--primary', theme.primary);
         document.documentElement.style.setProperty('--secondary', theme.secondary);
         document.documentElement.style.setProperty('--bg-color', theme.bg);

@@ -1322,7 +1322,7 @@ body {
 
 .social-icon:hover {
     background: var(--primary);
-    color: black;
+    color: var(--on-primary, #000);
     transform: translateY(-3px);
     box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
     border-color: var(--primary);
@@ -2489,7 +2489,7 @@ body.player-open { overflow: hidden; }
 }
 .src-host { font-size: 0.75rem; color: var(--player-muted); }
 .src-option.is-active { background: color-mix(in srgb, var(--primary) 12%, transparent); }
-.src-option.is-active .src-num { background: var(--primary); color: #fff; }
+.src-option.is-active .src-num { background: var(--primary); color: var(--on-primary, #fff); }
 
 /* Episode stepper */
 .ep-stepper {
@@ -2730,7 +2730,7 @@ body.player-open { overflow: hidden; }
   border: 0;
   border-radius: var(--ui-radius-sm);
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary, #fff);
   font: inherit;
   font-size: 0.92rem;
   font-weight: 600;
@@ -3124,4 +3124,23 @@ kbd {
 }
 @media (prefers-reduced-motion: reduce) {
   .search-input { transition: opacity 150ms ease; }
+}
+
+/* Search page transitions: the page settles in, and trending/results
+   cross-fade when you start or clear a search. */
+.search-page {
+  transition: opacity 260ms var(--ease-out), transform 260ms var(--ease-out);
+}
+.search-page.is-entering {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.search-fade { animation: search-fade-in 240ms var(--ease-out); }
+@keyframes search-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+.search-input.active { transition: width 260ms var(--ease-out), padding 260ms var(--ease-out), margin 260ms var(--ease-out), opacity 200ms ease, box-shadow 150ms ease; }
+@media (prefers-reduced-motion: reduce) {
+  .search-page, .search-page.is-entering { transform: none; transition: opacity 150ms ease; }
+  .search-fade { animation: none; }
 }
