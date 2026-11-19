@@ -2987,9 +2987,20 @@ kbd {
 /* Watchlist page: remove button (same look as Continue Watching buttons) */
 .wl-card { position: relative; }
 .wl-remove:hover { background: rgba(229, 57, 53, 0.9) !important; }
-/* Ratings badge sits below the card buttons instead of under them */
+/* Rating stays in the top-right corner like every other row; the card's
+   buttons (info / remove) sit in the top-left corner, and a "Not out yet"
+   label moves just below them. */
 .wl-card .poster-rating-badge,
-.cw-card .poster-rating-badge { top: 42px; right: 8px; }
+.cw-card .poster-rating-badge { top: 5px; right: 5px; }
+.wl-card .cw-actions,
+.cw-card .cw-actions { top: 5px; left: 5px; right: auto; }
+.wl-card .soon-badge,
+.cw-card .soon-badge { top: 38px; left: 5px; }
+/* Phone cards are too narrow for two buttons beside the rating: stack them. */
+@media (max-width: 768px) {
+  .cw-card .cw-actions { flex-direction: column; }
+  .cw-card .soon-badge { top: 72px; }
+}
 .wl-card .cw-actions { opacity: 1; }
 
 /* =========================================================
