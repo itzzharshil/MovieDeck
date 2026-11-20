@@ -629,9 +629,9 @@ function loadRecentlyViewed() {
         const actions = document.createElement('div');
         actions.className = 'cw-actions';
         actions.innerHTML = `
-            <button type="button" class="cw-btn" title="Details" aria-label="Details"><i class="fas fa-info"></i></button>
-            <button type="button" class="cw-btn" title="Remove from Continue Watching" aria-label="Remove"><i class="fas fa-xmark"></i></button>`;
-        const [infoBtn, removeBtn] = actions.querySelectorAll('button');
+            <button type="button" class="cw-btn" title="Remove from Continue Watching" aria-label="Remove"><i class="fas fa-xmark"></i></button>
+            <button type="button" class="cw-btn" title="Details" aria-label="Details"><i class="fas fa-info"></i></button>`;
+        const [removeBtn, infoBtn] = actions.querySelectorAll('button');
         infoBtn.onclick = (e) => { e.stopPropagation(); openModal(m, type); };
         removeBtn.onclick = (e) => { e.stopPropagation(); removeFromHistory(m.id); };
         el.appendChild(actions);
