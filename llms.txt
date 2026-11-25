@@ -1,0 +1,16 @@
+# MovieDeck
+
+> MovieDeck (https://moviedeck.xyz) is a free web app for discovering movies and TV shows. It shows trending titles, trailers, cast, ratings, where each title is streaming, full film collections in watch order, and lets people keep a watchlist. Data comes from TMDB.
+
+## Browse
+
+- [Popular movies](https://moviedeck.xyz/movie/): popular and top-rated films, each with cast, trailer, ratings and where to stream
+- [Popular TV shows](https://moviedeck.xyz/tv/): popular and top-rated series with seasons, cast and where to stream
+- [Movie collections in order](https://moviedeck.xyz/collection/): watch-order guides for franchises such as Star Wars, Harry Potter, the Marvel films and James Bond
+- [Sitemap](https://moviedeck.xyz/sitemap.xml): every title, genre and collection page
+
+## Notes
+
+- Title pages live at /movie/{name}-{tmdb-id}/ and /tv/{name}-{tmdb-id}/.
+- Search: https://moviedeck.xyz/?q={query}
+- MovieDeck doesn't host any media files.

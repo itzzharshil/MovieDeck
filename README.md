@@ -114,8 +114,18 @@ MovieDeck/
 ├── ui.css          # Current layout: sidebar, rows, watch, search and settings pages
 ├── sw.js           # Service worker
 ├── manifest.json   # Installable web app info
-└── assets/         # Images and screenshots
+├── 404.html        # Not-found page
+├── tools/
+│   └── build_seo.py  # Builds the crawlable title, genre and sitemap pages
+├── movie/ tv/ genre/ collection/ person/  # Generated pages (updated daily by GitHub Actions)
+└── assets/         # Images, icons and screenshots
 ```
+
+### Pages for search engines
+
+The app fills in its content with JavaScript, so on its own a search engine mostly sees one page. A GitHub Action runs [`tools/build_seo.py`](tools/build_seo.py) every day. It writes a real HTML page for each popular movie and series, such as `/movie/interstellar-157336/`, with the overview, cast, trailer, where to stream and similar titles. It also writes genre pages, "movies in order" pages for film series such as Star Wars and Harry Potter, pages for actors and directors, and `sitemap.xml`. New and changed pages are sent to Bing and other search engines through IndexNow. Pages are never removed, so links that search engines have already indexed keep working.
+
+You can run it yourself with `python3 tools/build_seo.py`.
 
 ---
 

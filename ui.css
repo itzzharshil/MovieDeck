@@ -1974,3 +1974,15 @@ button.side-link { width: 100%; text-align: left; }
   .networks .brand-tile.on-brand img { max-width: 92%; max-height: 34px; }
   .networks .brand-tile.logo-square img { max-width: 82%; max-height: 54px; }
 }
+
+/* Pinch-zoom is allowed now (better for accessibility and search ranking).
+   iOS zooms into any field under 16px when it's tapped, so keep fields at 16px on touch screens. */
+@media (hover: none) and (pointer: coarse) {
+  input, select, textarea,
+  #search-input, #search-input.in-page, .search-input.active,
+  .search-select, .set-select, #watch-season { font-size: 16px !important; }
+}
+
+/* Poster links wrap the image without changing the layout. */
+.poster-link { display: contents; }
+a.collection-card { color: inherit; text-decoration: none; }

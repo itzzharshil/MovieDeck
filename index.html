@@ -25,21 +25,57 @@
   }
 </script>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>MovieDeck - Free Movie Site & Premium Streaming Experience</title>
-    <meta name="description" content="MovieDeck is your premium free movie site with a glassmorphism-styled explorer. Discover and stream trending movies, watch trailers, and track your favorites for free." />
-    <meta name="keywords" content="moviedeck, free movie site, movies, tv shows, free streaming, watch free movies, entertainment, film, series" />
-    <meta name="author" content="MovieDeck" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>MovieDeck – Discover Movies & TV Shows, Trailers, Cast and Ratings</title>
+    <meta name="description" content="Explore trending movies and TV series on MovieDeck. Watch trailers, see the cast, ratings and where to stream, browse collections and keep a watchlist, all in one place." />
+    <link rel="canonical" id="canonical" href="https://moviedeck.xyz/" />
+    <meta name="theme-color" content="#090911" />
+    <meta name="application-name" content="MovieDeck" />
 
+    <meta property="og:site_name" content="MovieDeck" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="MovieDeck - Free Movie Site & Premium Streaming Experience" />
-    <meta property="og:description" content="MovieDeck is your premium free movie site. Discover and stream trending movies, watch trailers, and track your favorites for free." />
-    <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/2503/2503508.png" />
+    <meta property="og:url" content="https://moviedeck.xyz/" />
+    <meta property="og:title" content="MovieDeck – Discover Movies & TV Shows" />
+    <meta property="og:description" content="Trending movies and series, trailers, cast, ratings, collections and where to stream, all in one place." />
+    <meta property="og:image" content="https://moviedeck.xyz/assets/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The MovieDeck home page" />
 
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content="MovieDeck - Free Movie Site & Premium Streaming Experience" />
-    <meta property="twitter:description" content="MovieDeck is your premium free movie site. Discover and stream trending movies, watch trailers, and track your favorites for free." />
-    <meta property="twitter:image" content="https://cdn-icons-png.flaticon.com/512/2503/2503508.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MovieDeck – Discover Movies & TV Shows" />
+    <meta name="twitter:description" content="Trending movies and series, trailers, cast, ratings, collections and where to stream, all in one place." />
+    <meta name="twitter:image" content="https://moviedeck.xyz/assets/og-image.jpg" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://moviedeck.xyz/#website",
+          "url": "https://moviedeck.xyz/",
+          "name": "MovieDeck",
+          "description": "Discover movies and TV shows: trailers, cast, ratings and where to stream.",
+          "inLanguage": "en",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": { "@type": "EntryPoint", "urlTemplate": "https://moviedeck.xyz/?q={search_term_string}" },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "WebApplication",
+          "name": "MovieDeck",
+          "url": "https://moviedeck.xyz/",
+          "applicationCategory": "EntertainmentApplication",
+          "operatingSystem": "Any",
+          "image": "https://moviedeck.xyz/assets/og-image.jpg",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+        }
+      ]
+    }
+    </script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -64,8 +100,10 @@
       })();
     </script>
     <link rel="stylesheet" href="style.css?v=33" />
-    <link rel="stylesheet" href="ui.css?v=17" />
-    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="ui.css?v=19" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
     <link rel="icon" id="favicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ff007f'/%3E%3Cstop offset='1' stop-color='%237900ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='6' y='22' width='52' height='34' rx='5' fill='url(%23g)'/%3E%3Cpath d='M6 12 L56 6 L58 16 L8 22 Z' fill='url(%23g)'/%3E%3C/svg%3E">
     <link rel="canonical" href="https://moviedeck.xyz" />
     <script type="application/ld+json">
@@ -484,6 +522,8 @@
             </div>
 
             <div class="footer-legal-inline">
+                <a href="/movie/">Movies</a><span>|</span>
+                <a href="/tv/">TV Shows</a><span>|</span>
                 <a href="javascript:void(0)" onclick="showTextModal('privacy'); return false;">Privacy</a><span>|</span>
                 <a href="javascript:void(0)" onclick="showTextModal('terms'); return false;">Terms</a><span>|</span>
                 <a href="javascript:void(0)" onclick="showTextModal('dmca'); return false;">DMCA</a>
@@ -530,6 +570,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
-    <script src="script.js?v=41" defer></script>
+    <script src="script.js?v=43" defer></script>
   </body>
 </html>

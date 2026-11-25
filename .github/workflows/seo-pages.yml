@@ -1,0 +1,60 @@
+name: Build title pages
+
+# Builds a crawlable page for every popular movie and series, plus genre
+# pages and the sitemap (tools/build_seo.py), and commits any changes.
+
+on:
+  schedule:
+    - cron: "17 3 * * *"   # every day at 03:17 UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - tools/build_seo.py
+      - .github/workflows/seo-pages.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seo-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build pages
+        env:
+          TMDB_KEY: ${{ secrets.TMDB_KEY }}
+        run: python3 tools/build_seo.py --changed-out "$RUNNER_TEMP/changed.txt"
+
+      - name: Commit changes
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A movie tv genre collection person data sitemap.xml
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git commit -m "Update title pages ($(date -u +%F))"
+          git pull --rebase origin main
+          git push
+          echo "pushed=1" >> "$GITHUB_OUTPUT"
+
+      # Tell Bing, Yandex and other IndexNow engines about the new pages once
+      # the site has had time to deploy them.
+      - name: Ping IndexNow
+        if: steps.commit.outputs.pushed == '1'
+        run: |
+          sleep 240
+          python3 tools/build_seo.py --ping-file "$RUNNER_TEMP/changed.txt"

@@ -1,3 +1,4 @@
+const SEO_HOME_TITLE = 'MovieDeck – Discover Movies & TV Shows, Trailers, Cast and Ratings';
 // --- ANTI-DEBUGGING AND PROTECTION ---
 document.addEventListener('contextmenu', event => event.preventDefault());
 document.addEventListener('keydown', function (e) {
@@ -191,15 +192,15 @@ async function loadContent(type) {
     
     let heroPromise;
     if (type === "home") {
-        document.title = "MovieDeck - Home";
+        document.title = SEO_HOME_TITLE;
         setActiveNav("nav-home");
         heroPromise = setupHeroSlideshow("/trending/all/day");
     } else if (type === "tv") {
-        document.title = "MovieDeck - TV Series";
+        document.title = "TV Series | MovieDeck";
         setActiveNav("nav-tv");
         heroPromise = setupHeroSlideshow("/trending/tv/day");
     } else if (type === "movie") {
-        document.title = "MovieDeck - Movies";
+        document.title = "Movies | MovieDeck";
         setActiveNav("nav-movie");
         heroPromise = setupHeroSlideshow("/trending/movie/day");
     }
@@ -249,6 +250,12 @@ async function loadContent(type) {
             if (i === 0) loadRecentlyViewed(); // Continue Watching sits under the first row
         });
         if (type === "home") addHomeExtras();
+
+        // Show the page as soon as the hero is ready (or after 2.5s at most);
+        // the rows keep filling in behind it. Faster first paint for people
+        // and for search engines measuring load speed.
+        Promise.race([heroPromise || Promise.resolve(), new Promise(r => setTimeout(r, 2500))])
+            .then(() => { if (loader && seq === viewSeq) loader.classList.add("hidden"); });
 
         await Promise.all(promises);
     
@@ -377,6 +384,13 @@ function posterCaption(m, type) {
     return cap;
 }
 
+// Where a title lives on the web: its static page when one has been built,
+// otherwise the app URL (which points search engines at the same title).
+function titleHref(kind, id) {
+    const slug = seoSlugMap && seoSlugMap[kind] && seoSlugMap[kind][id];
+    return slug ? `/${kind}/${slug}-${id}/` : `/?${kind}=${id}`;
+}
+
 function createPosterElement(m, type, className = "poster-card", { caption = true } = {}) {
     const wrapper = document.createElement("div");
     wrapper.className = "poster-wrapper";
@@ -395,12 +409,26 @@ function createPosterElement(m, type, className = "poster-card", { caption = tru
     img.width = 200; // Hint for browser
     img.height = 300; // Hint for browser
     
-    img.onclick = () => {
-        if (type === 'person') openPerson(m.id);
-        else openModal(m, type);
-    };
-    
-    wrapper.appendChild(img);
+    if (type === 'person') {
+        img.onclick = () => openPerson(m.id);
+        wrapper.appendChild(img);
+    } else {
+        // A real link, so search engines can follow it and people can
+        // open a title in a new tab. A normal click stays in the app.
+        const kind = type === 'tv' || type === 'movie' ? type
+            : (m.media_type === 'tv' || (!m.title && m.name) ? 'tv' : 'movie');
+        const link = document.createElement('a');
+        link.className = 'poster-link';
+        link.href = titleHref(kind, m.id);
+        link.setAttribute('aria-label', m.title || m.name || 'Open title');
+        link.onclick = (e) => {
+            if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            e.preventDefault();
+            openModal(m, type);
+        };
+        link.appendChild(img);
+        wrapper.appendChild(link);
+    }
     
     const list = readJsonKey(getWishlistKey(), []);
     if (list.find(i => i.id === m.id)) {
@@ -460,7 +488,7 @@ async function loadGrid(title, endpoint, type) {
         title: title
     };
     
-    document.title = `MovieDeck - ${title}`;
+    document.title = `${title} | MovieDeck`;
     
     const container = document.getElementById("main-content");
     container.style.marginTop = "80px";
@@ -640,7 +668,7 @@ function loadSettings() {
     gridState.active = false;
     if (rowObserver) rowObserver.disconnect();
     setActiveNav('nav-settings');
-    document.title = 'MovieDeck - Settings';
+    document.title = 'Settings | MovieDeck';
     const container = document.getElementById('main-content');
     container.style.marginTop = '';
     document.getElementById('hero').style.display = 'none';
@@ -840,7 +868,7 @@ function addHomeExtras() {
     const seq = viewSeq;
 
     const load = async () => {
-        const data = await fetchHomeExtras();
+        const [data] = await Promise.all([fetchHomeExtras(), loadSeoSlugs()]);
         if (seq !== viewSeq || !wrap.isConnected) return;
 
         const section = (title, sub) => {
@@ -874,14 +902,22 @@ function addHomeExtras() {
             const row = document.createElement('div');
             row.className = 'row-posters collection-row';
             data.collections.forEach(c => {
-                const b = document.createElement('button');
-                b.type = 'button';
+                // A link to the collection's own page when it has one, so search
+                // engines can reach it; a normal click still opens it in the app.
+                const slug = seoSlugMap && seoSlugMap.collection && seoSlugMap.collection[c.id];
+                const b = document.createElement(slug ? 'a' : 'button');
+                if (slug) b.href = `/collection/${slug}-${c.id}/`;
+                else b.type = 'button';
                 b.className = 'collection-card';
                 b.innerHTML = `<img src="${BACK}${c.backdrop}" alt="" loading="lazy">
                     <span class="cc-text"><strong></strong><span>${c.count} movie${c.count === 1 ? '' : 's'}</span></span>`;
                 b.querySelector('strong').textContent = c.name.replace(/ Collection$/, '');
                 b.title = c.name;
-                b.onclick = () => loadCollection(c.id);
+                b.onclick = (e) => {
+                    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                    e.preventDefault();
+                    loadCollection(c.id);
+                };
                 row.appendChild(b);
             });
             sec.querySelector('.row-tools').appendChild(rowArrows(row));
@@ -916,7 +952,7 @@ async function loadCollection(id) {
         const res = await fetch(`${BASE}/collection/${id}?api_key=${KEY}`);
         const d = await res.json();
         if (seq !== viewSeq) return;
-        document.title = `MovieDeck - ${d.name}`;
+        document.title = `${d.name} | MovieDeck`;
         const parts = (d.parts || []).filter(p => p.poster_path)
             .sort((a, b) => (a.release_date || '9999').localeCompare(b.release_date || '9999'));
         container.innerHTML = `
@@ -1243,7 +1279,7 @@ async function openDetailsPopup(m, forcedType = null) {
             new URLSearchParams(location.search).get(type) === String(m.id);
         setUrl({ [type]: m.id }, sameTitle ? 'replace' : 'push', { layer: 'details' });
     }
-    document.title = `${m.title || m.name} - MovieDeck`;
+    document.title = `${m.title || m.name} | MovieDeck`;
 
     const modal = document.getElementById("modal");
     modalZIndex++;
@@ -1562,7 +1598,7 @@ function hideDetails() {
     {
         document.getElementById("modal").style.display = "none";
         document.body.style.overflow = "auto";
-        document.title = "MovieDeck - Premium Streaming Experience";
+        document.title = SEO_HOME_TITLE;
         if (document.getElementById("nav-home").classList.contains("active") && !searchPageOpen()) {
             loadRecentlyViewed();
         }
@@ -1917,7 +1953,7 @@ function openSearchPage({ q = '', focus = true } = {}) {
         mountSearchInput();
         if (focus) SEARCH_INPUT.focus({ preventScroll: true }); // moving the box drops focus
         loadSearchDefault();
-        document.title = 'MovieDeck - Search';
+        document.title = 'Search | MovieDeck';
         window.scrollTo({ top: 0, behavior: 'instant' });
         // Commit the starting style, then remove it so the page eases in.
         // (No requestAnimationFrame: it pauses in background tabs.)
@@ -1955,7 +1991,7 @@ function showSearchDefault() {
     if (!searchPageOpen()) return;
     showSearchPart('default');
     if (searchDefaultStale) { searchDefaultStale = false; loadSearchDefault(); }
-    document.title = 'MovieDeck - Search';
+    document.title = 'Search | MovieDeck';
     setUrl({ search: 1 }, 'replace');
 }
 
@@ -2217,7 +2253,7 @@ async function runSearch(raw, { exact = false } = {}) {
     const q = normalizeText(raw);
     if (q.length < 2) return;
 
-    document.title = `MovieDeck - Search: ${raw}`;
+    document.title = `${raw} – Search | MovieDeck`;
     if (!routing) setUrl({ q: raw.trim() }, 'replace');
     renderSearchShell(raw);
     renderSearchState('loading');
@@ -2506,7 +2542,7 @@ function openPlayer() {
     overlay.classList.add('is-open');
     document.body.classList.add('player-open');
     if (!sameTitle) overlay.scrollTop = 0;
-    document.title = `${playbackState.title || 'Watch'} - MovieDeck`;
+    document.title = `${playbackState.title || 'Watch'} | MovieDeck`;
     updateVideoControls();
     renderWatchInfo();
     const soon = document.getElementById('player-soon');
@@ -2627,7 +2663,7 @@ function closePlayerUI() {
     const overlay = document.getElementById('video-overlay');
     overlay.classList.remove('is-open');
     overlay.dataset.title = '';
-    document.title = 'MovieDeck - Premium Streaming Experience';
+    document.title = SEO_HOME_TITLE;
     const listNav = document.getElementById('nav-list');
     if (listNav && listNav.classList.contains('active')) loadWishlist();
     document.body.classList.remove('player-open');
@@ -2885,6 +2921,7 @@ async function renderWatchInfo() {
         if (watchInfoKey !== key || !data || !data.id) return;
         data.media_type = type;
         watchDetails = data;
+        syncSeo();
         if (!playbackState.title) {
             playbackState.title = data.title || data.name || '';
             updateVideoControls();
@@ -4184,3 +4221,103 @@ document.addEventListener('keydown', (e) => {
         showTextModal('shortcuts');
     }
 });
+
+// ---------------------------------------------------------------------------
+// Search engine and link-preview tags.
+// Every view sets document.title; when it changes, this keeps the description,
+// canonical link, share tags and robots tag in step with the current URL.
+// Title pages point their canonical at the static page made by
+// tools/build_seo.py when one exists (listed in /data/slugs.json).
+// ---------------------------------------------------------------------------
+const SEO_SITE = 'https://moviedeck.xyz';
+const SEO_DEFAULT = {
+    desc: 'Explore trending movies and TV series on MovieDeck. Watch trailers, see the cast, ratings and where to stream, browse collections and keep a watchlist, all in one place.',
+    image: SEO_SITE + '/assets/og-image.jpg',
+};
+var seoSlugs = null;
+var seoSlugMap = null;  // the same data once it has loaded, for code that can't wait
+function loadSeoSlugs() {
+    if (!seoSlugs) {
+        seoSlugs = fetch('/data/slugs.json')
+            .then(r => (r.ok ? r.json() : {}))
+            .catch(() => ({}))
+            .then(map => (seoSlugMap = map));
+    }
+    return seoSlugs;
+}
+
+function setHeadTag(selector, make, value) {
+    let el = document.head.querySelector(selector);
+    if (value == null) { if (el && make.removable) el.remove(); return; }
+    if (!el) {
+        el = document.createElement(make.tag);
+        Object.entries(make.attrs).forEach(([k, v]) => el.setAttribute(k, v));
+        document.head.appendChild(el);
+    }
+    el.setAttribute(make.key, value);
+}
+const metaName = (name, value, removable) =>
+    setHeadTag(`meta[name="${name}"]`, { tag: 'meta', attrs: { name }, key: 'content', removable }, value);
+const metaProp = (prop, value) =>
+    setHeadTag(`meta[property="${prop}"]`, { tag: 'meta', attrs: { property: prop }, key: 'content' }, value);
+
+function applySeo({ desc, path, image, noindex }) {
+    const url = SEO_SITE + (path || '/');
+    const title = document.title;
+    metaName('description', desc);
+    setHeadTag('link[rel="canonical"]', { tag: 'link', attrs: { rel: 'canonical' }, key: 'href' }, url);
+    metaProp('og:title', title);
+    metaProp('og:description', desc);
+    metaProp('og:url', url);
+    metaProp('og:image', image);
+    metaName('twitter:title', title);
+    metaName('twitter:description', desc);
+    metaName('twitter:image', image);
+    metaName('robots', noindex ? 'noindex, follow' : null, true);
+}
+
+let seoRun = 0;
+async function syncSeo() {
+    const run = ++seoRun;
+    const params = new URLSearchParams(location.search);
+    const type = params.has('movie') ? 'movie' : params.has('tv') ? 'tv' : null;
+
+    if (type) {
+        const id = params.get(type);
+        const pick = (x) => (x && String(x.id) === id ? x : null);
+        const item = { ...(pick(watchItem) || {}), ...(pick(watchDetails) || {}) };
+        const name = item.title || item.name || (typeof playbackState !== 'undefined' && playbackState.title) || '';
+        const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+        const overview = (item.overview || '').replace(/\s+/g, ' ').trim();
+        const lead = year ? `${name} (${year})` : name;
+        let desc = `${lead}: ${overview}`;
+        if (desc.length > 158) desc = desc.slice(0, 157).replace(/\s+\S*$/, '') + '…';
+        const image = item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : SEO_DEFAULT.image;
+        const slugs = await loadSeoSlugs();
+        if (run !== seoRun) return;
+        const slug = slugs[type] && slugs[type][id];
+        // Only the base title URL is indexable; episode and player variants point to it.
+        const path = slug ? `/${type}/${slug}-${id}/` : `/?${type}=${encodeURIComponent(id)}`;
+        applySeo({ desc: overview ? desc : SEO_DEFAULT.desc, path, image });
+        return;
+    }
+
+    // Search results, settings and other in-app views are for people, not search engines.
+    const privateView = ['q', 'search', 'settings', 'person', 'collection', 'genre']
+        .some(k => params.has(k));
+    applySeo({
+        desc: SEO_DEFAULT.desc,
+        path: privateView ? location.pathname + location.search : '/',
+        image: SEO_DEFAULT.image,
+        noindex: privateView,
+    });
+}
+
+(function watchTitle() {
+    const titleEl = document.querySelector('title');
+    if (!titleEl) return;
+    new MutationObserver(() => syncSeo()).observe(titleEl, { childList: true, characterData: true, subtree: true });
+    window.addEventListener('popstate', () => setTimeout(syncSeo, 0));
+    syncSeo();
+    loadSeoSlugs();
+})();

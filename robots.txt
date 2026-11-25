@@ -1,3 +1,5 @@
 User-agent: *
 Allow: /
-Sitemap: https://itzzharshil.github.io/MovieDeck/sitemap.xml
+Disallow: /tools/
+
+Sitemap: https://moviedeck.xyz/sitemap.xml
