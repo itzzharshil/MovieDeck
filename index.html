@@ -49,11 +49,24 @@
     <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
     <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
     <link rel="prefetch" href="https://api.themoviedb.org/3/trending/all/day?api_key=4803cc94c4172a32fc2851dda48d254f">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=block" as="style">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // Keep the logo hidden until its font is ready, so it never jumps
+      // from a fallback font to the real one on reload.
+      (function () {
+        var root = document.documentElement;
+        function ready() { root.classList.add('fonts-ready'); }
+        if (!document.fonts || !document.fonts.load) return ready();
+        Promise.race([
+          document.fonts.load('800 1em "Plus Jakarta Sans"'),
+          new Promise(function (r) { setTimeout(r, 1500); })
+        ]).then(ready, ready);
+      })();
+    </script>
     <link rel="stylesheet" href="style.css?v=33" />
+    <link rel="stylesheet" href="ui.css?v=14" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/2503/2503508.png">
+    <link rel="icon" id="favicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ff007f'/%3E%3Cstop offset='1' stop-color='%237900ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='6' y='22' width='52' height='34' rx='5' fill='url(%23g)'/%3E%3Cpath d='M6 12 L56 6 L58 16 L8 22 Z' fill='url(%23g)'/%3E%3C/svg%3E">
     <link rel="canonical" href="https://moviedeck.xyz" />
     <script type="application/ld+json">
     {
@@ -90,6 +103,30 @@
             <button class="btn-adblock-close" onclick="closeAdblockMsg()"><i class="fas fa-times"></i></button>
         </div>
     </div> -->
+
+    <aside class="sidebar" id="sidebar" aria-label="Main menu">
+      <a href="#" class="side-brand" onclick="loadContent('home'); return false;" aria-label="MovieDeck home">
+        <span class="side-mark"><i class="fas fa-clapperboard"></i></span>
+        <span class="side-name">MovieDeck</span>
+      </a>
+      <nav class="side-nav">
+        <a href="#" class="side-link" data-nav="nav-home" onclick="loadContent('home'); return false;" title="Home"><i class="fas fa-house"></i><span>Home</span></a>
+        <a href="#" class="side-link" data-nav="nav-search" onclick="openSearchPage(); return false;" title="Search"><i class="fas fa-magnifying-glass"></i><span>Search</span></a>
+        <a href="#" class="side-link" data-nav="nav-explore" onclick="loadExplore(); return false;" title="Explore"><i class="fas fa-compass"></i><span>Explore</span></a>
+        <p class="side-label">Media</p>
+        <a href="#" class="side-link" data-nav="nav-movie" onclick="loadContent('movie'); return false;" title="Movies"><i class="fas fa-film"></i><span>Movies</span></a>
+        <a href="#" class="side-link" data-nav="nav-tv" onclick="loadContent('tv'); return false;" title="TV Series"><i class="fas fa-tv"></i><span>TV Series</span></a>
+        <a href="#" class="side-link" data-nav="nav-list" onclick="loadWishlist(); return false;" title="Watchlist"><i class="fas fa-bookmark"></i><span>Watchlist</span></a>
+        <button type="button" class="side-link" id="side-surprise" onclick="toggleSurprise(event)" title="Surprise Me" aria-haspopup="dialog"><i class="fas fa-dice"></i><span>Surprise Me</span></button>
+        <p class="side-label">More</p>
+        <a href="#" class="side-link" data-nav="nav-settings" onclick="loadSettings(); return false;" title="Settings"><i class="fas fa-gear"></i><span>Settings</span></a>
+        <a href="#" class="side-link" onclick="showTextModal('shortcuts'); return false;" title="Keyboard shortcuts"><i class="fas fa-keyboard"></i><span>Shortcuts</span></a>
+        <a href="#" class="side-link" onclick="showTextModal('dmca'); return false;" title="Legal / DMCA"><i class="fas fa-file-lines"></i><span>Legal / DMCA</span></a>
+      </nav>
+      <button type="button" class="side-collapse" onclick="toggleSidebar()" aria-label="Collapse menu" title="Collapse menu">
+        <i class="fas fa-angles-left"></i><span>Collapse</span>
+      </button>
+    </aside>
 
     <nav class="navbar" id="navbar">
       <div class="nav-left">
@@ -132,7 +169,24 @@
           <div class="surprise-box" onclick="toggleSurprise(event)" title="Surprise Me!">
             <i class="fas fa-dice nav-icon" style="color: var(--primary);"></i>
           </div>
-          <div class="surprise-panel" id="surprise-dropdown" role="dialog" aria-label="Surprise me" onclick="event.stopPropagation()">
+
+        </div>
+
+
+        <div class="profile-container">
+          <div class="profile-icon" onclick="loadSettings()" title="Settings" role="button" aria-label="Settings">
+            <i class="fas fa-smile" style="color: white; font-size: 18px"></i>
+          </div>
+
+        </div>
+        <div class="menu-toggle" onclick="toggleMobileMenu()">
+          <i class="fas fa-bars"></i>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Menus: opened from the sidebar (desktop) or the top bar (phone) -->
+    <div class="surprise-panel" id="surprise-dropdown" role="dialog" aria-label="Surprise me" onclick="event.stopPropagation()">
             <p class="sp-label">What do you feel like?</p>
             <div class="sp-segment" role="radiogroup" aria-label="Type">
               <button type="button" role="radio" data-type="any" onclick="setSurpriseType('any')">Anything</button>
@@ -148,44 +202,7 @@
               <i class="fas fa-dice"></i> Surprise me
             </button>
           </div>
-        </div>
 
-
-        <div class="profile-container">
-          <div class="profile-icon" onclick="toggleProfile(event)">
-            <i class="fas fa-smile" style="color: white; font-size: 18px"></i>
-          </div>
-          <div class="profile-dropdown" onclick="event.stopPropagation()">
-            <a href="#" onclick="clearHistory()"><i class="fas fa-history" style="margin-right: 10px; width: 20px; text-align: center;"></i> Clear History</a>
-            <a href="#" onclick="clearWishlist()"><i class="fas fa-trash" style="margin-right: 10px; width: 20px; text-align: center;"></i> Clear Watchlist</a>
-            <div class="dropdown-divider"></div>
-            <a href="#" onclick="exportBackup()"><i class="fas fa-download" style="margin-right: 10px; width: 20px; text-align: center;"></i> Back up my data</a>
-            <a href="#" onclick="importBackup()"><i class="fas fa-upload" style="margin-right: 10px; width: 20px; text-align: center;"></i> Restore from backup</a>
-            <a href="#" onclick="showTextModal('shortcuts')"><i class="fas fa-keyboard" style="margin-right: 10px; width: 20px; text-align: center;"></i> Keyboard shortcuts</a>
-            <div class="dropdown-divider"></div>
-            <div style="padding: 10px 20px; color: #a0a0a0; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Theme Color</div>
-            <div class="theme-options" style="display: flex; gap: 10px; padding: 0 20px 10px 20px;">
-                <div class="theme-dot" style="background: linear-gradient(135deg, #00f2ff, #bd00ff); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="setTheme('default', this)" title="Neon Cyan"></div>
-                <div class="theme-dot" style="background: linear-gradient(135deg, #e50914, #b20710); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="setTheme('netflix', this)" title="Cinematic Red"></div>
-                <div class="theme-dot" style="background: linear-gradient(135deg, #1ce783, #00b05b); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="setTheme('hulu', this)" title="Neon Green"></div>
-                <div class="theme-dot" style="background: linear-gradient(135deg, #ff007f, #7900ff); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 10px #ff007f;" onclick="setTheme('cyberpunk', this)" title="Cyberpunk Pink (Default)"></div>
-                <div class="theme-dot" style="background: linear-gradient(135deg, #ffffff, #888888); width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="setTheme('amoled', this)" title="AMOLED Black"></div>
-            </div>
-            <div class="dropdown-divider"></div>
-            <div style="padding: 10px 20px; color: #a0a0a0; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Settings</div>
-            <a href="#" onclick="toggleRatings()" style="display: flex; justify-content: space-between; align-items: center;">
-                <span><i class="fas fa-star" style="margin-right: 10px; width: 20px; text-align: center;"></i> Show Ratings</span>
-                <span id="rating-toggle-text" style="color: var(--primary); font-weight: bold; font-size: 0.8rem;"></span>
-            </a>
-            <div class="dropdown-divider"></div>
-            <a href="#" onclick="resetApp()" style="color: #ff4757;"><i class="fas fa-sign-out-alt" style="margin-right: 10px; width: 20px; text-align: center;"></i> Sign Out</a>
-          </div>
-        </div>
-        <div class="menu-toggle" onclick="toggleMobileMenu()">
-          <i class="fas fa-bars"></i>
-        </div>
-      </div>
-    </nav>
 
     <div class="mobile-menu" id="mobile-menu">
         <div class="mobile-menu-header">
@@ -199,31 +216,29 @@
             <li><a href="#movie" onclick="loadContent('movie'); toggleMobileMenu();">Movies</a></li>
             <li><a href="#explore" onclick="loadExplore(); toggleMobileMenu();">Explore</a></li>
             <li><a href="#list" onclick="loadWishlist(); toggleMobileMenu();">Watchlist</a></li>
+            <li><a href="#" onclick="loadSettings(); toggleMobileMenu();">Settings</a></li>
         </ul>
     </div>
 
     <header class="hero" id="hero">
       <div class="hero-overlay"></div>
+      <div class="hero-dots" id="hero-dots" aria-label="Featured titles"></div>
       <div class="hero-content" id="hero-content-box">
+        <p class="hero-eyebrow" id="hero-eyebrow"></p>
         <h1 class="hero-title" id="hero-title">MovieDeck</h1>
+        <div class="hero-chips" id="hero-chips"></div>
         <p class="hero-desc" id="hero-desc">
-          MovieDeck is your ultimate guide to the world of cinema and television. 
-          Explore trending movies, popular TV series, and uncover hidden gems with our 
-          premium, glassmorphism-inspired interface. Create your watchlist, view trailers, 
-          and track your favorite entertainment—all in one place.
+          Discover trending movies and series, watch trailers and keep a watchlist, all in one place.
         </p>
-        <div id="hero-buttons" class="hero-buttons" style="display: none; margin-top: 20px;">
-          <button
-            class="btn btn-white"
-            onclick="playMedia(window.currentHeroItem)"
-          >
+        <div id="hero-buttons" class="hero-buttons" style="display: none;">
+          <button class="btn btn-white hero-play" onclick="playMedia(window.currentHeroItem)">
             <i class="fas fa-play"></i> <span class="btn-text">Play</span>
           </button>
-          <button class="btn btn-grey" onclick="playTrailer(window.currentHeroItem)">
-            <i class="fas fa-film"></i> <span class="btn-text">Trailer</span>
+          <button class="btn btn-grey btn-square" onclick="playTrailer(window.currentHeroItem)" title="Trailer" aria-label="Watch trailer">
+            <i class="fas fa-film"></i>
           </button>
-          <button class="btn btn-grey" onclick="addToWishlistHero()">
-            <i class="fas fa-plus"></i> <span class="btn-text">Watchlist</span>
+          <button class="btn btn-grey btn-square" onclick="addToWishlistHero()" title="Add to Watchlist" aria-label="Add to Watchlist">
+            <i class="fas fa-plus"></i>
           </button>
         </div>
       </div>
@@ -304,59 +319,115 @@
     </div>
 
 
-    <div id="video-overlay" class="player" role="dialog" aria-modal="true" aria-labelledby="video-title">
-      <header class="player-top">
-        <button class="player-icon-btn" onclick="closeVideo()" aria-label="Close player">
-          <i class="fas fa-arrow-left"></i>
-        </button>
-        <div class="player-heading">
-          <span id="video-title" class="player-title"></span>
-          <span id="video-subtitle" class="player-subtitle"></span>
-        </div>
-      </header>
+    <div id="video-overlay" class="player watch" role="dialog" aria-modal="true" aria-labelledby="video-title">
+      <button type="button" class="watch-toggle watch-nav-toggle" onclick="toggleSidebar()" aria-label="Collapse menu" title="Collapse menu">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <div class="watch-main">
+        <header class="watch-top">
+          <button class="watch-back" onclick="closeVideo()" aria-label="Back" title="Back (Esc)">
+            <i class="fas fa-arrow-left"></i>
+          </button>
+          <div class="player-heading">
+            <span id="video-title" class="player-title"></span>
+            <span id="video-subtitle" class="player-subtitle"></span>
+          </div>
+        </header>
 
-      <div class="player-stage">
-        <iframe id="video-frame" title="Video player" allowfullscreen allow="autoplay; fullscreen; encrypted-media; picture-in-picture" referrerpolicy="origin"></iframe>
-        <div id="player-veil" class="player-veil" aria-hidden="true">
-          <div class="player-spinner"></div>
-          <span id="player-veil-text">Connecting to Server 1…</span>
+        <div class="player-stage">
+          <iframe id="video-frame" title="Video player" allowfullscreen allow="autoplay; fullscreen; encrypted-media; picture-in-picture" referrerpolicy="origin"></iframe>
+          <div id="player-veil" class="player-veil" aria-hidden="true">
+            <div class="player-spinner"></div>
+            <span id="player-veil-text">Connecting to Server 1…</span>
+          </div>
+          <div id="player-soon" class="player-soon" hidden>
+            <span class="player-soon-badge"><i class="fas fa-calendar"></i> Not out yet</span>
+            <strong id="player-soon-title"></strong>
+            <span id="player-soon-text"></span>
+          </div>
         </div>
+
+        <section class="now-bar">
+          <div class="now-text">
+            <span class="now-label"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span id="now-label">Now Playing</span></span>
+            <span class="now-title" id="now-title"></span>
+          </div>
+          <div class="ep-stepper" id="episode-nav" hidden>
+            <button class="now-btn sm" id="btn-prev-ep" onclick="prevEpisode()" aria-label="Previous episode" title="Previous episode (P)">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <span id="current-ep-info" class="ep-stepper-label">S1 · E1</span>
+            <button class="now-btn sm" id="btn-next-ep" onclick="nextEpisode()" aria-label="Next episode" title="Next episode (N)">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+          <div class="now-actions">
+            <button type="button" class="now-btn" id="watch-list-btn" onclick="toggleWatchlistPlaying()" aria-label="Add to Watchlist" title="Add to Watchlist">
+              <i class="fas fa-plus"></i>
+            </button>
+            <button type="button" class="now-btn" onclick="sharePlaying()" aria-label="Share" title="Share a link">
+              <i class="fas fa-share-nodes"></i>
+            </button>
+            <a id="video-external-link" class="now-btn" href="#" target="_blank" rel="noopener" aria-label="Open in a new tab" title="Open this server in a new tab">
+              <i class="fas fa-arrow-up-right-from-square"></i>
+            </a>
+          </div>
+        </section>
+
+        <div id="watch-servers">
+          <p class="srv-note"><i class="fas fa-circle-info"></i> Not playing? Pick another server. An ad blocker or the Brave browser helps too.</p>
+          <div id="src-menu" class="srv-grid" role="listbox" aria-label="Choose a server"></div>
+        </div>
+
+        <section id="watch-episodes" class="watch-episodes" hidden>
+          <div class="we-head">
+            <h3>Episodes</h3>
+            <select id="watch-season" class="we-season" onchange="loadWatchEpisodes(this.value)" aria-label="Season"></select>
+          </div>
+          <div id="watch-episode-list" class="we-list"></div>
+        </section>
+
+        <section class="watch-recs" id="watch-recs" hidden>
+          <div class="row-header">
+            <h2>Recommended</h2>
+            <div class="row-tools" id="watch-recs-tools"></div>
+          </div>
+          <div class="row-posters" id="watch-recs-row"></div>
+        </section>
+
+        <p class="watch-disclaimer">MovieDeck doesn't host any files. Videos are streamed from third-party services.</p>
       </div>
 
-      <footer class="player-dock">
-        <div class="dock-group">
-          <div class="src-picker" id="src-picker">
-            <button id="src-trigger" class="src-trigger" onclick="toggleServerMenu()" aria-haspopup="listbox" aria-expanded="false" aria-controls="src-menu">
-              <span class="src-trigger-label">Server</span>
-              <span id="src-current" class="src-trigger-value">1</span>
-              <i class="fas fa-chevron-up src-chevron"></i>
-            </button>
-            <div id="src-menu" class="src-menu" role="listbox" aria-label="Choose a server"></div>
+      <button type="button" class="watch-toggle watch-side-toggle" onclick="toggleWatchPanel()" aria-label="Hide details" title="Hide details">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+
+      <aside class="watch-side" id="watch-side" aria-label="About this title">
+        <div class="ws-card ws-intro">
+          <div class="ws-backdrop" id="ws-backdrop" aria-hidden="true"></div>
+          <div class="ws-top">
+            <div class="ws-poster">
+              <img id="ws-poster" alt="">
+              <span id="ws-rating" class="ws-rating" hidden></span>
+            </div>
+            <dl class="ws-facts" id="ws-facts"></dl>
           </div>
-          <button class="dock-btn" onclick="nextServer()" title="Switch to the next server">
-            <i class="fas fa-rotate-right"></i><span>Not playing? Try next</span>
-          </button>
+          <h2 id="ws-title" class="ws-title"></h2>
+          <p id="ws-overview" class="ws-overview"></p>
+          <div id="ws-genres" class="ws-genres"></div>
+          <div id="ws-trailers-wrap" hidden>
+            <h3 class="ws-h">Trailers</h3>
+            <div id="ws-trailers" class="ws-trailers"></div>
+          </div>
         </div>
-
-        <div class="ep-stepper" id="episode-nav" hidden>
-          <button class="player-icon-btn sm" id="btn-prev-ep" onclick="prevEpisode()" aria-label="Previous episode">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <span id="current-ep-info" class="ep-stepper-label">S1 · E1</span>
-          <button class="player-icon-btn sm" id="btn-next-ep" onclick="nextEpisode()" aria-label="Next episode">
-            <i class="fas fa-chevron-right"></i>
-          </button>
+        <div class="ws-card" id="ws-cast-wrap" hidden>
+          <div class="ws-head">
+            <h3 class="ws-h">Cast</h3>
+            <button type="button" class="ws-more" id="ws-cast-all" onclick="toggleCastAll()"></button>
+          </div>
+          <div id="ws-cast" class="ws-cast"></div>
         </div>
-
-        <div class="dock-group dock-end">
-        <button type="button" class="dock-btn dock-btn-ghost" onclick="sharePlaying()" title="Share a link to this episode">
-          <i class="fas fa-share-nodes"></i><span>Share</span>
-        </button>
-        <a id="video-external-link" class="dock-btn dock-btn-ghost" href="#" target="_blank" rel="noopener" title="Open this server in a new tab">
-          <i class="fas fa-arrow-up-right-from-square"></i><span>New tab</span>
-        </a>
-        </div>
-      </footer>
+      </aside>
     </div>
 
     <div id="trailer-overlay" class="video-overlay" onclick="closeTrailer()">
@@ -459,6 +530,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
-    <script src="script.js?v=30" defer></script>
+    <script src="script.js?v=38" defer></script>
   </body>
 </html>
