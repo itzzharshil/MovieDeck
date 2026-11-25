@@ -760,15 +760,16 @@ function setDefaultServer(key) {
 }
 
 // --- Streaming services, studios and collections (bottom of Home) -------------
+// bg: the service's own colour for its tile; white: show the logo in white on it.
 const HOME_NETWORKS = [
-    { id: 213, name: 'Netflix' },
-    { id: 2739, name: 'Disney+' },
-    { id: 1024, name: 'Prime Video' },
-    { id: 3186, name: 'HBO Max' },
-    { id: 2552, name: 'Apple TV+' },
-    { id: 453, name: 'Hulu' },
-    { id: 1112, name: 'Crunchyroll' },
-    { id: 4330, name: 'Paramount+' },
+    { id: 213, name: 'Netflix', bg: '#000000' },
+    { id: 2739, name: 'Disney+', bg: 'linear-gradient(165deg, #0a1a36 0%, #0c3f57 62%, #1d8f93 100%)', white: true },
+    { id: 1024, name: 'Prime Video', bg: '#ffffff' },
+    { id: 3186, name: 'HBO Max', bg: '#000000', white: true, logo: '/xbYyhmzn6oq3RoV6MT03ZUMMo7L.png', square: true },
+    { id: 2552, name: 'Apple TV+', bg: 'linear-gradient(180deg, #2b2b30, #111114)', white: true },
+    { id: 453, name: 'Hulu', bg: 'linear-gradient(160deg, #1ce783, #13b56a)', white: true },
+    { id: 1112, name: 'Crunchyroll', bg: '#f47521', white: true, logo: '/dOMUSdqs9aD6buzolSllaUMcQJy.png', square: true },
+    { id: 4330, name: 'Paramount+', bg: 'linear-gradient(160deg, #1a6dff, #0047d6)', white: true, logo: '/16OxSHMEIM8grzWahocwOH1ZOtw.png', square: true },
 ];
 const HOME_STUDIOS = [
     { id: 420, name: 'Marvel Studios' },
@@ -815,9 +816,18 @@ function brandTile(item, onClick) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'brand-tile' + (item.color ? ' keep-color' : '');
+    const look = HOME_NETWORKS.find(n => n.id === item.id && n.name === item.name);
+    if (look) {
+        b.classList.add('on-brand');
+        if (look.square) b.classList.add('logo-square');
+        if (look.white) b.classList.add('logo-white');
+        b.style.setProperty('--tile', look.bg);
+    }
     b.title = item.name;
     b.setAttribute('aria-label', item.name);
-    b.innerHTML = `<img src="https://image.tmdb.org/t/p/w300${item.logo}" alt="" loading="lazy">`;
+    // Some services have a squarer logo that fills the tile better.
+    const logo = (look && look.logo) || item.logo;
+    b.innerHTML = `<img src="https://image.tmdb.org/t/p/w300${logo}" alt="" loading="lazy">`;
     b.onclick = onClick;
     return b;
 }
