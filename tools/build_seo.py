@@ -930,7 +930,8 @@ def main():
         hubs.append("/person/")
 
     # 6. Sitemap, manifest and the slug index for the app.
-    urls = [f"  <url><loc>{SITE}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>"]
+    urls = [f"  <url><loc>{SITE}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>",
+            f"  <url><loc>{SITE}/app/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>"]
     urls += [f"  <url><loc>{SITE}{h}</loc><lastmod>{TODAY}</lastmod><changefreq>daily</changefreq>"
              f"<priority>0.8</priority></url>" for h in sorted(hubs)]
     for kind in ("collection", "movie", "tv", "person"):

@@ -1986,3 +1986,58 @@ button.side-link { width: 100%; text-align: left; }
 /* Poster links wrap the image without changing the layout. */
 .poster-link { display: contents; }
 a.collection-card { color: inherit; text-decoration: none; }
+
+/* =========================================================
+   ANDROID APP: links, and a banner for Android browsers
+   ========================================================= */
+html.in-app .get-app,
+html.in-app .app-banner { display: none !important; }
+.mobile-nav-links .get-app a { color: var(--primary); }
+.mobile-nav-links .get-app i { margin-right: 6px; }
+
+.app-banner {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 2200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 12px 12px 12px 14px;
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: inset 0 0 0 1px var(--line-strong), 0 18px 40px rgba(0, 0, 0, 0.6);
+  transform: translateY(140%);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.app-banner.show { transform: none; }
+.app-banner img { width: 40px; height: 40px; border-radius: 10px; flex: none; }
+.app-banner .ab-text { flex: 1; min-width: 0; line-height: 1.3; }
+.app-banner strong,
+.app-banner span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app-banner strong { font-size: 0.9rem; }
+.app-banner span { color: var(--muted); font-size: 0.78rem; }
+.app-banner .ab-get {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.app-banner .ab-close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+}

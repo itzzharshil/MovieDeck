@@ -92,6 +92,9 @@
       (function () {
         var root = document.documentElement;
         function ready() { root.classList.add('fonts-ready'); }
+        var ua = navigator.userAgent;
+        if (/MovieDeckApp\//.test(ua)) root.classList.add('in-app');
+        else if (/Android/i.test(ua)) root.classList.add('is-android');
         if (!document.fonts || !document.fonts.load) return ready();
         Promise.race([
           document.fonts.load('800 1em "Plus Jakarta Sans"'),
@@ -100,7 +103,7 @@
       })();
     </script>
     <link rel="stylesheet" href="style.css?v=33" />
-    <link rel="stylesheet" href="ui.css?v=19" />
+    <link rel="stylesheet" href="ui.css?v=20" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
@@ -158,6 +161,7 @@
         <button type="button" class="side-link" id="side-surprise" onclick="toggleSurprise(event)" title="Surprise Me" aria-haspopup="dialog"><i class="fas fa-dice"></i><span>Surprise Me</span></button>
         <p class="side-label">More</p>
         <a href="#" class="side-link" data-nav="nav-settings" onclick="loadSettings(); return false;" title="Settings"><i class="fas fa-gear"></i><span>Settings</span></a>
+        <a href="/app/" class="side-link get-app" title="Android app"><i class="fab fa-android"></i><span>Android app</span></a>
         <a href="#" class="side-link" onclick="showTextModal('shortcuts'); return false;" title="Keyboard shortcuts"><i class="fas fa-keyboard"></i><span>Shortcuts</span></a>
         <a href="#" class="side-link" onclick="showTextModal('dmca'); return false;" title="Legal / DMCA"><i class="fas fa-file-lines"></i><span>Legal / DMCA</span></a>
       </nav>
@@ -255,6 +259,7 @@
             <li><a href="#explore" onclick="loadExplore(); toggleMobileMenu();">Explore</a></li>
             <li><a href="#list" onclick="loadWishlist(); toggleMobileMenu();">Watchlist</a></li>
             <li><a href="#" onclick="loadSettings(); toggleMobileMenu();">Settings</a></li>
+            <li class="get-app"><a href="/app/"><i class="fab fa-android"></i> Get the Android app</a></li>
         </ul>
     </div>
 
@@ -524,6 +529,7 @@
             <div class="footer-legal-inline">
                 <a href="/movie/">Movies</a><span>|</span>
                 <a href="/tv/">TV Shows</a><span>|</span>
+                <a href="/app/" class="get-app">Android app</a><span class="get-app">|</span>
                 <a href="javascript:void(0)" onclick="showTextModal('privacy'); return false;">Privacy</a><span>|</span>
                 <a href="javascript:void(0)" onclick="showTextModal('terms'); return false;">Terms</a><span>|</span>
                 <a href="javascript:void(0)" onclick="showTextModal('dmca'); return false;">DMCA</a>
@@ -570,6 +576,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
-    <script src="script.js?v=43" defer></script>
+    <script src="script.js?v=44" defer></script>
   </body>
 </html>

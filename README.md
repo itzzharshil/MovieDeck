@@ -67,6 +67,11 @@ It's built with plain HTML, CSS and JavaScript. There is no framework, no build 
 
 - Works on **phones, tablets and desktops**, with a sidebar on large screens and a compact top bar on mobile
 
+### 📱 Android app
+- Get it from [moviedeck.xyz/app](https://moviedeck.xyz/app/) or the [latest release](https://github.com/itzzharshil/MovieDeck/releases/latest)
+- Full screen, with video that rotates to landscape and ad pop-ups blocked
+- Loads the live site, so new features show up without an update
+
 ---
 
 ## Screenshots

@@ -4321,3 +4321,36 @@ async function syncSeo() {
     syncSeo();
     loadSeoSlugs();
 })();
+
+// Android browsers: offer the app once in a while. Hidden inside the app itself.
+(function appBanner() {
+    var root = document.documentElement;
+    if (!root.classList.contains('is-android')) return;
+    var KEY = 'appBannerHidden';
+    try {
+        if (Date.now() - Number(localStorage.getItem(KEY) || 0) < 14 * 864e5) return;
+    } catch (e) {}
+    setTimeout(function () {
+        if (document.querySelector('.app-banner')) return;
+        var bar = document.createElement('div');
+        bar.className = 'app-banner';
+        bar.setAttribute('role', 'region');
+        bar.setAttribute('aria-label', 'MovieDeck for Android');
+        bar.innerHTML =
+            '<img src="/assets/icons/app-icon-192.png" alt="">' +
+            '<div class="ab-text"><strong>MovieDeck app</strong><span>Free for Android</span></div>' +
+            '<a class="ab-get" href="/app/">Get app</a>' +
+            '<button type="button" class="ab-close" aria-label="Not now"><i class="fas fa-times"></i></button>';
+        function hide() {
+            try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+            bar.classList.remove('show');
+            setTimeout(function () { bar.remove(); }, 400);
+        }
+        bar.querySelector('.ab-close').addEventListener('click', hide);
+        bar.querySelector('.ab-get').addEventListener('click', function () {
+            try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+        });
+        document.body.appendChild(bar);
+        requestAnimationFrame(function () { requestAnimationFrame(function () { bar.classList.add('show'); }); });
+    }, 4000);
+})();
