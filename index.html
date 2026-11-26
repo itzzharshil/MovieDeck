@@ -7,6 +7,11 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  // Tell visits from the Android app apart from the website.
+  (function () {
+    var m = navigator.userAgent.match(/MovieDeckApp\/([\d.]+)/);
+    gtag('set', 'user_properties', { app_platform: m ? 'android_app' : 'web', app_version: m ? m[1] : '' });
+  })();
 
   gtag('config', 'G-SM7BDJXH5H');
 
@@ -576,6 +581,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
-    <script src="script.js?v=47" defer></script>
+    <script src="script.js?v=48" defer></script>
   </body>
 </html>

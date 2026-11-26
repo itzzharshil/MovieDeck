@@ -4314,6 +4314,19 @@ async function syncSeo() {
     loadSeoSlugs();
 })();
 
+// Analytics events for the Android app (Google Analytics, if it loaded).
+function track(name, params) {
+    try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch (e) {}
+}
+
+// Clicks on the "Android app" links in the sidebar, phone menu and footer.
+document.addEventListener('click', function (e) {
+    var link = e.target.closest && e.target.closest('a.get-app, .get-app a');
+    if (!link) return;
+    var where = link.closest('.sidebar') ? 'sidebar' : link.closest('.mobile-menu') ? 'menu' : link.closest('footer') ? 'footer' : 'other';
+    track('app_link_click', { link_location: where });
+});
+
 // Android browsers: offer the app once in a while. Hidden inside the app itself.
 (function appBanner() {
     var root = document.documentElement;
@@ -4338,11 +4351,16 @@ async function syncSeo() {
             bar.classList.remove('show');
             setTimeout(function () { bar.remove(); }, 400);
         }
-        bar.querySelector('.ab-close').addEventListener('click', hide);
+        bar.querySelector('.ab-close').addEventListener('click', function () {
+            track('app_banner_dismiss');
+            hide();
+        });
         bar.querySelector('.ab-get').addEventListener('click', function () {
+            track('app_banner_click');
             try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
         });
         document.body.appendChild(bar);
+        track('app_banner_view');
         requestAnimationFrame(function () { requestAnimationFrame(function () { bar.classList.add('show'); }); });
     }, 4000);
 })();
