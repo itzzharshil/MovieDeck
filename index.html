@@ -103,11 +103,11 @@
       })();
     </script>
     <link rel="stylesheet" href="style.css?v=33" />
-    <link rel="stylesheet" href="ui.css?v=20" />
+    <link rel="stylesheet" href="ui.css?v=21" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
-    <link rel="icon" id="favicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ff007f'/%3E%3Cstop offset='1' stop-color='%237900ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='6' y='22' width='52' height='34' rx='5' fill='url(%23g)'/%3E%3Cpath d='M6 12 L56 6 L58 16 L8 22 Z' fill='url(%23g)'/%3E%3C/svg%3E">
+    <link rel="icon" id="favicon" type="image/svg+xml" href="/assets/icons/favicon.svg" />
     <link rel="canonical" href="https://moviedeck.xyz" />
     <script type="application/ld+json">
     {
@@ -147,7 +147,7 @@
 
     <aside class="sidebar" id="sidebar" aria-label="Main menu">
       <a href="#" class="side-brand" onclick="loadContent('home'); return false;" aria-label="MovieDeck home">
-        <span class="side-mark"><i class="fas fa-clapperboard"></i></span>
+        <span class="side-mark"><svg class="deck-mark" viewBox="19 26 58 58" aria-hidden="true" focusable="false"><defs><linearGradient id="mdg-side" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--primary)"/><stop offset="1" style="stop-color:var(--secondary)"/></linearGradient></defs><path d="M44 31H66A6 6 0 0 1 72 37V71A6 6 0 0 1 66 77H44A6 6 0 0 1 38 71V37A6 6 0 0 1 44 31Z" fill="url(#mdg-side)" opacity=".35" transform="rotate(-18 55 76)"/><path d="M44 31H66A6 6 0 0 1 72 37V71A6 6 0 0 1 66 77H44A6 6 0 0 1 38 71V37A6 6 0 0 1 44 31Z" fill="url(#mdg-side)" opacity=".65" transform="rotate(-8 55 76)"/><path d="M44 31H66A6 6 0 0 1 72 37V71A6 6 0 0 1 66 77H44A6 6 0 0 1 38 71V37A6 6 0 0 1 44 31Z M50 45V63L65 54Z" fill="url(#mdg-side)" fill-rule="evenodd"/></svg></span>
         <span class="side-name">MovieDeck</span>
       </a>
       <nav class="side-nav">
@@ -172,7 +172,7 @@
 
     <nav class="navbar" id="navbar">
       <div class="nav-left">
-        <a href="#home" class="logo" onclick="loadContent('home'); return false;" style="text-decoration: none;">MovieDeck</a>
+        <a href="#home" class="logo" onclick="loadContent('home'); return false;" style="text-decoration: none;"><svg class="deck-mark nav-mark" viewBox="19 26 58 58" aria-hidden="true" focusable="false"><defs><linearGradient id="mdg-nav" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--primary)"/><stop offset="1" style="stop-color:var(--secondary)"/></linearGradient></defs><path d="M44 31H66A6 6 0 0 1 72 37V71A6 6 0 0 1 66 77H44A6 6 0 0 1 38 71V37A6 6 0 0 1 44 31Z" fill="url(#mdg-nav)" opacity=".35" transform="rotate(-18 55 76)"/><path d="M44 31H66A6 6 0 0 1 72 37V71A6 6 0 0 1 66 77H44A6 6 0 0 1 38 71V37A6 6 0 0 1 44 31Z" fill="url(#mdg-nav)" opacity=".65" transform="rotate(-8 55 76)"/><path d="M44 31H66A6 6 0 0 1 72 37V71A6 6 0 0 1 66 77H44A6 6 0 0 1 38 71V37A6 6 0 0 1 44 31Z M50 45V63L65 54Z" fill="url(#mdg-nav)" fill-rule="evenodd"/></svg>MovieDeck</a>
         <ul class="nav-links">
           <li class="nav-item">
             <a href="#home" class="nav-link active" id="nav-home" onclick="loadContent('home'); return false;">Home</a>
@@ -576,6 +576,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
-    <script src="script.js?v=44" defer></script>
+    <script src="script.js?v=45" defer></script>
   </body>
 </html>

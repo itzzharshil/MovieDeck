@@ -183,11 +183,7 @@ def write_if_changed(path, content):
     return True
 
 
-FAVICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E"
-           "%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' "
-           "stop-color='%23ff007f'/%3E%3Cstop offset='1' stop-color='%237000ff'/%3E%3C/linearGradient%3E"
-           "%3C/defs%3E%3Crect x='6' y='22' width='52' height='34' rx='6' fill='url(%23g)'/%3E%3Cpath "
-           "d='M8 10l48-4 2 12-48 4z' fill='url(%23g)'/%3E%3C/svg%3E")
+FAVICON = "/assets/icons/favicon.svg"
 
 
 def head(title, desc, canonical, image, og_type="website", ld=None):
@@ -213,14 +209,14 @@ def head(title, desc, canonical, image, og_type="website", ld=None):
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{esc(title)}">
 <meta name="twitter:description" content="{esc(desc)}">
-<link rel="icon" href="{FAVICON}">
+<link rel="icon" type="image/svg+xml" href="{FAVICON}">
 <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://image.tmdb.org">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/seo.css?v=3">{lds}
+<link rel="stylesheet" href="/assets/seo.css?v=6">{lds}
 </head>
 <body>
 <header class="top">

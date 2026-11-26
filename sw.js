@@ -1,4 +1,4 @@
-const CACHE_NAME = "movie-deck-v11";
+const CACHE_NAME = "movie-deck-v12";
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",

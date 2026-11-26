@@ -759,7 +759,7 @@ function renderSettings() {
         const on = key === current;
         return `<button type="button" class="theme-opt${on ? ' is-active' : ''}" role="radio" aria-checked="${on}"
                     onclick="setTheme('${key}'); renderSettings();" style="--a:${t.primary};--b:${t.secondary}">
-                    <span class="theme-swatch"><i class="fas fa-clapperboard"></i></span>
+                    <span class="theme-swatch">${deckMark('sw-' + key, t.primary, t.secondary)}</span>
                     <span class="theme-name">${label}</span>
                     <i class="fas fa-check theme-check" aria-hidden="true"></i>
                 </button>`;
@@ -3896,33 +3896,25 @@ function applyTheme(themeName) {
     }
 }
 
-// The browser-tab icon is the same clapperboard as the site logo, drawn in
-// the theme's gradient.
+// The MovieDeck logo: a deck of cards with a play button, in two colours.
+const DECK_CARD = 'M44 31H66A6 6 0 0 1 72 37V71A6 6 0 0 1 66 77H44A6 6 0 0 1 38 71V37A6 6 0 0 1 44 31Z';
+const DECK_PLAY = 'M50 45V63L65 54Z';
+function deckMark(id, a, b) {
+    return `<svg class="deck-mark" viewBox="19 26 58 58" aria-hidden="true" focusable="false">` +
+        `<defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>` +
+        `<path d="${DECK_CARD}" fill="url(#${id})" opacity=".35" transform="rotate(-18 55 76)"/>` +
+        `<path d="${DECK_CARD}" fill="url(#${id})" opacity=".65" transform="rotate(-8 55 76)"/>` +
+        `<path d="${DECK_CARD} ${DECK_PLAY}" fill="url(#${id})" fill-rule="evenodd"/></svg>`;
+}
+
+// The browser-tab icon is the logo in the theme's colours.
 function updateFavicon(theme) {
-    const draw = () => {
-        const icon = document.querySelector('.side-mark i');
-        const glyph = icon ? getComputedStyle(icon, '::before').content.replace(/["']/g, '') : '';
-        if (!glyph || glyph === 'none') return;
-        const size = 64;
-        const c = document.createElement('canvas');
-        c.width = c.height = size;
-        const ctx = c.getContext('2d');
-        const g = ctx.createLinearGradient(0, 0, size, size);
-        g.addColorStop(0, theme.primary);
-        g.addColorStop(1, theme.secondary);
-        ctx.fillStyle = g;
-        ctx.font = '900 58px "Font Awesome 6 Free"';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(glyph, size / 2, size / 2 + 2);
-        const link = document.getElementById('favicon');
-        if (link) { link.type = 'image/png'; link.href = c.toDataURL('image/png'); }
-    };
-    if (document.fonts && document.fonts.load) {
-        document.fonts.load('900 58px "Font Awesome 6 Free"').then(draw, draw);
-    } else {
-        draw();
-    }
+    const link = document.getElementById('favicon');
+    if (!link) return;
+    const svg = deckMark('f', theme.primary, theme.secondary)
+        .replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+    link.type = 'image/svg+xml';
+    link.href = 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
 initTheme();

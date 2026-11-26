@@ -2041,3 +2041,17 @@ html.in-app .app-banner { display: none !important; }
   font-size: 1rem;
   cursor: pointer;
 }
+
+/* =========================================================
+   LOGO: deck of cards with a play button, in the theme colours
+   ========================================================= */
+.side-mark { background: none !important; padding: 0; }
+.side-mark .deck-mark { width: 100%; height: 100%; display: block; }
+.navbar .logo { display: inline-flex; align-items: center; gap: 0.3em; }
+.navbar .logo .nav-mark { width: 1.15em; height: 1.15em; flex: none; }
+.theme-swatch .deck-mark { width: 28px; height: 28px; }
+
+/* Phone menu: plain list of links */
+.mobile-nav-links { list-style: none; margin: 0; padding: 0; }
+.mobile-nav-links a { display: block; color: inherit; text-decoration: none; }
+.mobile-nav-links li:hover a { color: var(--primary); }
