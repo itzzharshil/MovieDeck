@@ -3904,7 +3904,7 @@ function deckMark(id, a, b) {
         `<defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>` +
         `<path d="${DECK_CARD}" fill="url(#${id})" opacity=".35" transform="rotate(-18 55 76)"/>` +
         `<path d="${DECK_CARD}" fill="url(#${id})" opacity=".65" transform="rotate(-8 55 76)"/>` +
-        `<path d="${DECK_CARD} ${DECK_PLAY}" fill="url(#${id})" fill-rule="evenodd"/></svg>`;
+        `<path d="${DECK_CARD}" fill="url(#${id})"/><path d="${DECK_PLAY}" fill="${readableTextOn(a)}"/></svg>`;
 }
 
 // The browser-tab icon is the logo in the theme's colours.
